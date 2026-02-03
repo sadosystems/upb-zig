@@ -10,3 +10,6 @@ publish the python script on pypi (and add to path)
 rewrite the plugin (just code gen part not the runtime) in zig
 cross compile binary to all platforms and distribute those with gh releases so you don't need to use python / pip
 maybe do some profiling to see how much worse this implementation performs vs protobuf-zig
+
+WAS LAST DOING: 
+trying to get the wheel for protoc gen zig to work with a console script 
