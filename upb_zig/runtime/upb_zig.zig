@@ -461,6 +461,136 @@ pub fn setString(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value:
     c.upb_zig_Message_SetString(msg, field, toStringView(value), null);
 }
 
+// --- Array (repeated field) Operations ---
+
+/// Get the number of elements in a repeated field.
+pub fn getArrayLen(msg: *const c.upb_Message, field: *const c.upb_MiniTableField) usize {
+    const arr = c.upb_zig_Message_GetArray(msg, field);
+    if (arr == null) return 0;
+    return c.upb_zig_Array_Size(arr);
+}
+
+// Array element getters - take (msg, field, index), return the element value.
+// Returns default if the array is null.
+
+pub fn arrayGetBool(msg: *const c.upb_Message, field: *const c.upb_MiniTableField, index: usize) bool {
+    const arr = c.upb_zig_Message_GetArray(msg, field);
+    if (arr == null) return false;
+    return c.upb_zig_Array_GetBool(arr, index);
+}
+
+pub fn arrayGetInt32(msg: *const c.upb_Message, field: *const c.upb_MiniTableField, index: usize) i32 {
+    const arr = c.upb_zig_Message_GetArray(msg, field);
+    if (arr == null) return 0;
+    return c.upb_zig_Array_GetInt32(arr, index);
+}
+
+pub fn arrayGetInt64(msg: *const c.upb_Message, field: *const c.upb_MiniTableField, index: usize) i64 {
+    const arr = c.upb_zig_Message_GetArray(msg, field);
+    if (arr == null) return 0;
+    return c.upb_zig_Array_GetInt64(arr, index);
+}
+
+pub fn arrayGetUInt32(msg: *const c.upb_Message, field: *const c.upb_MiniTableField, index: usize) u32 {
+    const arr = c.upb_zig_Message_GetArray(msg, field);
+    if (arr == null) return 0;
+    return c.upb_zig_Array_GetUInt32(arr, index);
+}
+
+pub fn arrayGetUInt64(msg: *const c.upb_Message, field: *const c.upb_MiniTableField, index: usize) u64 {
+    const arr = c.upb_zig_Message_GetArray(msg, field);
+    if (arr == null) return 0;
+    return c.upb_zig_Array_GetUInt64(arr, index);
+}
+
+pub fn arrayGetFloat(msg: *const c.upb_Message, field: *const c.upb_MiniTableField, index: usize) f32 {
+    const arr = c.upb_zig_Message_GetArray(msg, field);
+    if (arr == null) return 0.0;
+    return c.upb_zig_Array_GetFloat(arr, index);
+}
+
+pub fn arrayGetDouble(msg: *const c.upb_Message, field: *const c.upb_MiniTableField, index: usize) f64 {
+    const arr = c.upb_zig_Message_GetArray(msg, field);
+    if (arr == null) return 0.0;
+    return c.upb_zig_Array_GetDouble(arr, index);
+}
+
+pub fn arrayGetString(msg: *const c.upb_Message, field: *const c.upb_MiniTableField, index: usize) []const u8 {
+    const arr = c.upb_zig_Message_GetArray(msg, field);
+    if (arr == null) return "";
+    return fromStringView(c.upb_zig_Array_GetString(arr, index));
+}
+
+pub fn arrayGetMessage(msg: *const c.upb_Message, field: *const c.upb_MiniTableField, index: usize) ?*c.upb_Message {
+    const arr = c.upb_zig_Message_GetArray(msg, field);
+    if (arr == null) return null;
+    const sub = c.upb_zig_Array_GetMessage(arr, index);
+    if (sub == null) return null;
+    return @constCast(sub);
+}
+
+// Array element appenders - take (msg, field, value, arena).
+// Creates the array if it doesn't exist.
+
+pub fn arrayAppendBool(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value: bool, arena: Arena) !void {
+    const arr = c.upb_zig_Message_GetOrCreateMutableArray(msg, field, arena.ptr) orelse return error.OutOfMemory;
+    if (!c.upb_zig_Array_AppendBool(arr, value, arena.ptr)) return error.OutOfMemory;
+}
+
+pub fn arrayAppendInt32(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value: i32, arena: Arena) !void {
+    const arr = c.upb_zig_Message_GetOrCreateMutableArray(msg, field, arena.ptr) orelse return error.OutOfMemory;
+    if (!c.upb_zig_Array_AppendInt32(arr, value, arena.ptr)) return error.OutOfMemory;
+}
+
+pub fn arrayAppendInt64(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value: i64, arena: Arena) !void {
+    const arr = c.upb_zig_Message_GetOrCreateMutableArray(msg, field, arena.ptr) orelse return error.OutOfMemory;
+    if (!c.upb_zig_Array_AppendInt64(arr, value, arena.ptr)) return error.OutOfMemory;
+}
+
+pub fn arrayAppendUInt32(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value: u32, arena: Arena) !void {
+    const arr = c.upb_zig_Message_GetOrCreateMutableArray(msg, field, arena.ptr) orelse return error.OutOfMemory;
+    if (!c.upb_zig_Array_AppendUInt32(arr, value, arena.ptr)) return error.OutOfMemory;
+}
+
+pub fn arrayAppendUInt64(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value: u64, arena: Arena) !void {
+    const arr = c.upb_zig_Message_GetOrCreateMutableArray(msg, field, arena.ptr) orelse return error.OutOfMemory;
+    if (!c.upb_zig_Array_AppendUInt64(arr, value, arena.ptr)) return error.OutOfMemory;
+}
+
+pub fn arrayAppendFloat(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value: f32, arena: Arena) !void {
+    const arr = c.upb_zig_Message_GetOrCreateMutableArray(msg, field, arena.ptr) orelse return error.OutOfMemory;
+    if (!c.upb_zig_Array_AppendFloat(arr, value, arena.ptr)) return error.OutOfMemory;
+}
+
+pub fn arrayAppendDouble(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value: f64, arena: Arena) !void {
+    const arr = c.upb_zig_Message_GetOrCreateMutableArray(msg, field, arena.ptr) orelse return error.OutOfMemory;
+    if (!c.upb_zig_Array_AppendDouble(arr, value, arena.ptr)) return error.OutOfMemory;
+}
+
+pub fn arrayAppendString(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value: []const u8, arena: Arena) !void {
+    const arr = c.upb_zig_Message_GetOrCreateMutableArray(msg, field, arena.ptr) orelse return error.OutOfMemory;
+    if (!c.upb_zig_Array_AppendString(arr, toStringView(value), arena.ptr)) return error.OutOfMemory;
+}
+
+pub fn arrayAppendMessage(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value: *c.upb_Message, arena: Arena) !void {
+    const arr = c.upb_zig_Message_GetOrCreateMutableArray(msg, field, arena.ptr) orelse return error.OutOfMemory;
+    if (!c.upb_zig_Array_AppendMessage(arr, value, arena.ptr)) return error.OutOfMemory;
+}
+
+// --- Sub-message (nested message) Operations ---
+
+/// Get a sub-message from a message field. Returns null if not set.
+pub fn getMessage(msg: *const c.upb_Message, field: *const c.upb_MiniTableField) ?*c.upb_Message {
+    const sub = c.upb_zig_Message_GetMessage(msg, field);
+    if (sub == null) return null;
+    return @constCast(sub);
+}
+
+/// Set a sub-message on a message field.
+pub fn setMessage(msg: *c.upb_Message, field: *const c.upb_MiniTableField, sub_msg: *c.upb_Message) void {
+    c.upb_zig_Message_SetMessage(msg, field, sub_msg);
+}
+
 // --- Encode/Decode ---
 
 pub const EncodeError = error{EncodeFailed};

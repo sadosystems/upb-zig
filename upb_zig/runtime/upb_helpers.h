@@ -16,10 +16,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// Forward declarations for reflection types (avoid including C++ headers)
+// Forward declarations (avoid including headers with problematic inline functions)
 typedef struct upb_DefPool upb_DefPool;
 typedef struct upb_FileDef upb_FileDef;
 typedef struct upb_MessageDef upb_MessageDef;
+typedef struct upb_Array upb_Array;
 
 // JSON decode result codes
 enum {
@@ -114,6 +115,61 @@ void upb_zig_Message_SetDouble(
     upb_Message* msg,
     const upb_MiniTableField* field,
     double value);
+
+// ============================================================================
+// Array (repeated field) operations
+// ============================================================================
+
+// Get array from message (read-only, may return NULL)
+const upb_Array* upb_zig_Message_GetArray(
+    const upb_Message* msg,
+    const upb_MiniTableField* field);
+
+// Get or create mutable array (for appending elements)
+upb_Array* upb_zig_Message_GetOrCreateMutableArray(
+    upb_Message* msg,
+    const upb_MiniTableField* field,
+    upb_Arena* arena);
+
+// Get array size
+size_t upb_zig_Array_Size(const upb_Array* arr);
+
+// Type-specific array element getters
+bool upb_zig_Array_GetBool(const upb_Array* arr, size_t index);
+int32_t upb_zig_Array_GetInt32(const upb_Array* arr, size_t index);
+int64_t upb_zig_Array_GetInt64(const upb_Array* arr, size_t index);
+uint32_t upb_zig_Array_GetUInt32(const upb_Array* arr, size_t index);
+uint64_t upb_zig_Array_GetUInt64(const upb_Array* arr, size_t index);
+float upb_zig_Array_GetFloat(const upb_Array* arr, size_t index);
+double upb_zig_Array_GetDouble(const upb_Array* arr, size_t index);
+upb_StringView upb_zig_Array_GetString(const upb_Array* arr, size_t index);
+const upb_Message* upb_zig_Array_GetMessage(const upb_Array* arr, size_t index);
+
+// Type-specific array element appenders (return false on allocation failure)
+bool upb_zig_Array_AppendBool(upb_Array* arr, bool val, upb_Arena* arena);
+bool upb_zig_Array_AppendInt32(upb_Array* arr, int32_t val, upb_Arena* arena);
+bool upb_zig_Array_AppendInt64(upb_Array* arr, int64_t val, upb_Arena* arena);
+bool upb_zig_Array_AppendUInt32(upb_Array* arr, uint32_t val, upb_Arena* arena);
+bool upb_zig_Array_AppendUInt64(upb_Array* arr, uint64_t val, upb_Arena* arena);
+bool upb_zig_Array_AppendFloat(upb_Array* arr, float val, upb_Arena* arena);
+bool upb_zig_Array_AppendDouble(upb_Array* arr, double val, upb_Arena* arena);
+bool upb_zig_Array_AppendString(upb_Array* arr, upb_StringView val, upb_Arena* arena);
+bool upb_zig_Array_AppendMessage(upb_Array* arr, const upb_Message* val, upb_Arena* arena);
+
+// ============================================================================
+// Sub-message (nested message) operations
+// ============================================================================
+
+// Get sub-message from a message field (returns NULL if not set)
+const upb_Message* upb_zig_Message_GetMessage(
+    const upb_Message* msg,
+    const upb_MiniTableField* field);
+
+// Set sub-message on a message field
+void upb_zig_Message_SetMessage(
+    upb_Message* msg,
+    const upb_MiniTableField* field,
+    upb_Message* sub_msg);
 
 // ============================================================================
 // Reflection API wrappers - for loading MiniTables from serialized descriptors

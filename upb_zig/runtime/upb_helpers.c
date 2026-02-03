@@ -6,6 +6,7 @@
 // just sees normal function calls.
 
 #include "upb/message/accessors.h"
+#include "upb/message/array.h"
 #include "upb/base/string_view.h"
 #include "upb/reflection/def.h"
 #include "upb/reflection/descriptor_bootstrap.h"
@@ -128,6 +129,136 @@ void upb_zig_Message_SetDouble(
     const upb_MiniTableField* field,
     double value) {
   upb_Message_SetBaseFieldDouble(msg, field, value);
+}
+
+// ============================================================================
+// Array (repeated field) operations
+// ============================================================================
+
+const upb_Array* upb_zig_Message_GetArray(
+    const upb_Message* msg,
+    const upb_MiniTableField* field) {
+  return upb_Message_GetArray(msg, field);
+}
+
+upb_Array* upb_zig_Message_GetOrCreateMutableArray(
+    upb_Message* msg,
+    const upb_MiniTableField* field,
+    upb_Arena* arena) {
+  return upb_Message_GetOrCreateMutableArray(msg, field, arena);
+}
+
+size_t upb_zig_Array_Size(const upb_Array* arr) {
+  return upb_Array_Size(arr);
+}
+
+// Type-specific getters
+bool upb_zig_Array_GetBool(const upb_Array* arr, size_t index) {
+  return upb_Array_Get(arr, index).bool_val;
+}
+
+int32_t upb_zig_Array_GetInt32(const upb_Array* arr, size_t index) {
+  return upb_Array_Get(arr, index).int32_val;
+}
+
+int64_t upb_zig_Array_GetInt64(const upb_Array* arr, size_t index) {
+  return upb_Array_Get(arr, index).int64_val;
+}
+
+uint32_t upb_zig_Array_GetUInt32(const upb_Array* arr, size_t index) {
+  return upb_Array_Get(arr, index).uint32_val;
+}
+
+uint64_t upb_zig_Array_GetUInt64(const upb_Array* arr, size_t index) {
+  return upb_Array_Get(arr, index).uint64_val;
+}
+
+float upb_zig_Array_GetFloat(const upb_Array* arr, size_t index) {
+  return upb_Array_Get(arr, index).float_val;
+}
+
+double upb_zig_Array_GetDouble(const upb_Array* arr, size_t index) {
+  return upb_Array_Get(arr, index).double_val;
+}
+
+upb_StringView upb_zig_Array_GetString(const upb_Array* arr, size_t index) {
+  return upb_Array_Get(arr, index).str_val;
+}
+
+const upb_Message* upb_zig_Array_GetMessage(const upb_Array* arr, size_t index) {
+  return upb_Array_Get(arr, index).msg_val;
+}
+
+// Type-specific appenders
+bool upb_zig_Array_AppendBool(upb_Array* arr, bool val, upb_Arena* arena) {
+  upb_MessageValue msgval;
+  msgval.bool_val = val;
+  return upb_Array_Append(arr, msgval, arena);
+}
+
+bool upb_zig_Array_AppendInt32(upb_Array* arr, int32_t val, upb_Arena* arena) {
+  upb_MessageValue msgval;
+  msgval.int32_val = val;
+  return upb_Array_Append(arr, msgval, arena);
+}
+
+bool upb_zig_Array_AppendInt64(upb_Array* arr, int64_t val, upb_Arena* arena) {
+  upb_MessageValue msgval;
+  msgval.int64_val = val;
+  return upb_Array_Append(arr, msgval, arena);
+}
+
+bool upb_zig_Array_AppendUInt32(upb_Array* arr, uint32_t val, upb_Arena* arena) {
+  upb_MessageValue msgval;
+  msgval.uint32_val = val;
+  return upb_Array_Append(arr, msgval, arena);
+}
+
+bool upb_zig_Array_AppendUInt64(upb_Array* arr, uint64_t val, upb_Arena* arena) {
+  upb_MessageValue msgval;
+  msgval.uint64_val = val;
+  return upb_Array_Append(arr, msgval, arena);
+}
+
+bool upb_zig_Array_AppendFloat(upb_Array* arr, float val, upb_Arena* arena) {
+  upb_MessageValue msgval;
+  msgval.float_val = val;
+  return upb_Array_Append(arr, msgval, arena);
+}
+
+bool upb_zig_Array_AppendDouble(upb_Array* arr, double val, upb_Arena* arena) {
+  upb_MessageValue msgval;
+  msgval.double_val = val;
+  return upb_Array_Append(arr, msgval, arena);
+}
+
+bool upb_zig_Array_AppendString(upb_Array* arr, upb_StringView val, upb_Arena* arena) {
+  upb_MessageValue msgval;
+  msgval.str_val = val;
+  return upb_Array_Append(arr, msgval, arena);
+}
+
+bool upb_zig_Array_AppendMessage(upb_Array* arr, const upb_Message* val, upb_Arena* arena) {
+  upb_MessageValue msgval;
+  msgval.msg_val = val;
+  return upb_Array_Append(arr, msgval, arena);
+}
+
+// ============================================================================
+// Sub-message (nested message) operations
+// ============================================================================
+
+const upb_Message* upb_zig_Message_GetMessage(
+    const upb_Message* msg,
+    const upb_MiniTableField* field) {
+  return upb_Message_GetMessage(msg, field);
+}
+
+void upb_zig_Message_SetMessage(
+    upb_Message* msg,
+    const upb_MiniTableField* field,
+    upb_Message* sub_msg) {
+  upb_Message_SetBaseFieldMessage(msg, field, sub_msg);
 }
 
 // ============================================================================

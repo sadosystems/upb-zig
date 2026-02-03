@@ -142,11 +142,10 @@ test "scalar field encode/decode roundtrip" {
 }
 
 // ============================================================================
-// Stub Tests - these exercise codegen features that are currently stubbed out.
-// Each test targets a specific TODO in the generated code.
+// Repeated Field Tests
 // ============================================================================
 
-test "STUB: repeated field count after decode" {
+test "repeated field count after decode" {
     // Wire format for FailureSet with one TestStatus entry:
     //   field 2 (test), wire type 2 (len-delimited): tag = (2 << 3) | 2 = 18
     //   length = 11
@@ -161,12 +160,10 @@ test "STUB: repeated field count after decode" {
 
     const failure_set = try conformance_pb.FailureSet.decode(arena, wire_data);
 
-    // upb successfully decoded this - the data is in the upb_Message.
-    // But testCount() is stubbed to always return 0.
     try std.testing.expect(failure_set.testCount() > 0);
 }
 
-test "STUB: repeated field add then count" {
+test "repeated field add then count" {
     var arena = try upb_zig.Arena.init(std.testing.allocator);
     defer arena.deinit();
 
@@ -174,14 +171,15 @@ test "STUB: repeated field add then count" {
     var test_status = try conformance_pb.TestStatus.init(arena);
     test_status.setName("some_test");
 
-    // addTest is stubbed as a no-op
     try failure_set.addTest(test_status);
-
-    // testCount is stubbed to return 0
     try std.testing.expectEqual(@as(usize, 1), failure_set.testCount());
 }
 
-test "STUB: nested message getter after decode" {
+// ============================================================================
+// Nested Message Tests
+// ============================================================================
+
+test "nested message getter after decode" {
     // Wire format for ConformanceRequest with jspb_encoding_options set:
     //   field 6 (jspb_encoding_options), wire type 2 (len-delimited): tag = (6 << 3) | 2 = 50
     //   length = 2
@@ -195,12 +193,10 @@ test "STUB: nested message getter after decode" {
 
     const request = try conformance_pb.ConformanceRequest.decode(arena, wire_data);
 
-    // upb successfully decoded this - the nested message is in the upb_Message.
-    // But getJspbEncodingOptions() is stubbed to always return null.
     try std.testing.expect(request.getJspbEncodingOptions() != null);
 }
 
-test "STUB: nested message setter then getter" {
+test "nested message setter then getter" {
     var arena = try upb_zig.Arena.init(std.testing.allocator);
     defer arena.deinit();
 
@@ -209,9 +205,7 @@ test "STUB: nested message setter then getter" {
 
     var request = try conformance_pb.ConformanceRequest.init(arena);
 
-    // setJspbEncodingOptions is stubbed as a no-op
-    request.setJspbEncodingOptions(&config);
+    request.setJspbEncodingOptions(config);
 
-    // getJspbEncodingOptions is stubbed to return null
     try std.testing.expect(request.getJspbEncodingOptions() != null);
 }

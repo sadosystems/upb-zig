@@ -171,6 +171,22 @@ def runtime_setter(field: FieldDescriptorProto) -> str:
     return None
 
 
+def array_getter_fn(field: FieldDescriptorProto) -> str:
+    """Get the runtime array element getter function name for a field type."""
+    fn_name = PROTO_TYPE_TO_RUNTIME_FN.get(field.type)
+    if fn_name:
+        return f"upb_zig.arrayGet{fn_name}"
+    return None
+
+
+def array_appender_fn(field: FieldDescriptorProto) -> str:
+    """Get the runtime array element appender function name for a field type."""
+    fn_name = PROTO_TYPE_TO_RUNTIME_FN.get(field.type)
+    if fn_name:
+        return f"upb_zig.arrayAppend{fn_name}"
+    return None
+
+
 def default_value(field: FieldDescriptorProto) -> str:
     """Get the default value for a field type."""
     if field.type == FieldDescriptorProto.TYPE_STRING:
@@ -256,23 +272,43 @@ pub const ${message.name} = struct {
     /// ${field.name} field (${field_type_name(field)}, field number ${field.number})
 % if is_repeated(field):
     pub fn ${snake_to_camel(field.name)}Count(self: *const ${message.name}) usize {
-        _ = self;
-        // TODO: implement repeated field count via upb_Message_GetArray
-        return 0;
+        const field_desc = getField(FieldNumber.${escape_zig_keyword(field.name)}) orelse return 0;
+        return upb_zig.getArrayLen(self._msg, field_desc);
     }
 
+  % if is_scalar(field):
     pub fn get${pascal_case(field.name)}(self: *const ${message.name}, index: usize) ${zig_type(field)} {
-        _ = self;
-        _ = index;
-        // TODO: implement repeated field getter via upb_Array
-        ${default_return(field)}
+        const field_desc = getField(FieldNumber.${escape_zig_keyword(field.name)}) orelse return ${default_value(field)};
+        return ${array_getter_fn(field)}(self._msg, field_desc, index);
     }
 
     pub fn add${pascal_case(field.name)}(self: *${message.name}, value: ${zig_type(field)}) !void {
-        _ = self;
-        _ = value;
-        // TODO: implement repeated field append via upb_Array
+        const field_desc = getField(FieldNumber.${escape_zig_keyword(field.name)}) orelse return error.OutOfMemory;
+        try ${array_appender_fn(field)}(self._msg, field_desc, value, self._arena);
     }
+  % elif is_enum(field):
+    pub fn get${pascal_case(field.name)}(self: *const ${message.name}, index: usize) ${zig_type(field)} {
+        const field_desc = getField(FieldNumber.${escape_zig_keyword(field.name)}) orelse return @enumFromInt(0);
+        const raw = upb_zig.arrayGetInt32(self._msg, field_desc, index);
+        return ${zig_type(field)}.fromInt(raw) orelse @enumFromInt(0);
+    }
+
+    pub fn add${pascal_case(field.name)}(self: *${message.name}, value: ${zig_type(field)}) !void {
+        const field_desc = getField(FieldNumber.${escape_zig_keyword(field.name)}) orelse return error.OutOfMemory;
+        try upb_zig.arrayAppendInt32(self._msg, field_desc, value.toInt(), self._arena);
+    }
+  % else:
+    pub fn get${pascal_case(field.name)}(self: *const ${message.name}, index: usize) ?${zig_type(field)} {
+        const field_desc = getField(FieldNumber.${escape_zig_keyword(field.name)}) orelse return null;
+        const sub_msg = upb_zig.arrayGetMessage(self._msg, field_desc, index) orelse return null;
+        return ${zig_type(field)}{ ._msg = sub_msg, ._arena = self._arena };
+    }
+
+    pub fn add${pascal_case(field.name)}(self: *${message.name}, value: ${zig_type(field)}) !void {
+        const field_desc = getField(FieldNumber.${escape_zig_keyword(field.name)}) orelse return error.OutOfMemory;
+        try upb_zig.arrayAppendMessage(self._msg, field_desc, value._msg, self._arena);
+    }
+  % endif
 % elif is_scalar(field):
     pub fn get${pascal_case(field.name)}(self: *const ${message.name}) ${zig_type(field)} {
         const field_desc = getField(FieldNumber.${escape_zig_keyword(field.name)}) orelse return ${default_value(field)};
@@ -295,16 +331,15 @@ pub const ${message.name} = struct {
         upb_zig.setInt32(self._msg, field_desc, value.toInt());
     }
 % else:
-    pub fn get${pascal_case(field.name)}(self: *const ${message.name}) ?*${zig_type(field)} {
-        _ = self;
-        // TODO: implement nested message getter
-        return null;
+    pub fn get${pascal_case(field.name)}(self: *const ${message.name}) ?${zig_type(field)} {
+        const field_desc = getField(FieldNumber.${escape_zig_keyword(field.name)}) orelse return null;
+        const sub_msg = upb_zig.getMessage(self._msg, field_desc) orelse return null;
+        return ${zig_type(field)}{ ._msg = sub_msg, ._arena = self._arena };
     }
 
-    pub fn set${pascal_case(field.name)}(self: *${message.name}, value: *${zig_type(field)}) void {
-        _ = self;
-        _ = value;
-        // TODO: implement nested message setter
+    pub fn set${pascal_case(field.name)}(self: *${message.name}, value: ${zig_type(field)}) void {
+        const field_desc = getField(FieldNumber.${escape_zig_keyword(field.name)}) orelse return;
+        upb_zig.setMessage(self._msg, field_desc, value._msg);
     }
 % endif
 
@@ -499,6 +534,8 @@ def generate_message(message: DescriptorProto, file_name: str, resolve_type=None
         default_value=default_value,
         runtime_getter=runtime_getter,
         runtime_setter=runtime_setter,
+        array_getter_fn=array_getter_fn,
+        array_appender_fn=array_appender_fn,
         escape_zig_keyword=escape_zig_keyword,
     )
 
