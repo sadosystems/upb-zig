@@ -157,6 +157,15 @@ bool upb_zig_Array_AppendString(upb_Array* arr, upb_StringView val, upb_Arena* a
 bool upb_zig_Array_AppendMessage(upb_Array* arr, const upb_Message* val, upb_Arena* arena);
 
 // ============================================================================
+// Field presence check
+// ============================================================================
+
+// Check if a field is set (works for oneofs, optional fields, etc.)
+bool upb_zig_Message_HasField(
+    const upb_Message* msg,
+    const upb_MiniTableField* field);
+
+// ============================================================================
 // Sub-message (nested message) operations
 // ============================================================================
 

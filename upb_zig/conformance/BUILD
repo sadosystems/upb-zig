@@ -60,6 +60,7 @@ zig_binary(
     main = "conformance.zig",
     deps = [
         "//upb_zig/runtime:upb_zig",
+        ":conformance_pb",
         ":zig_test_messages_proto3",
         ":zig_test_messages_proto2",
         ":zig_test_messages_proto3_editions",

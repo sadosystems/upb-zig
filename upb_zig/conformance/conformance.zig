@@ -4,272 +4,19 @@
 //! It reads ConformanceRequest messages from stdin and writes ConformanceResponse
 //! messages to stdout using the length-prefixed wire protocol.
 //!
-//! The conformance protocol messages are manually parsed, but the actual test
-//! message (TestAllTypesProto3/Proto2) is decoded and re-encoded using our
-//! generated Zig bindings to validate the implementation.
+//! The request/response protocol messages are decoded/encoded using generated Zig
+//! bindings from conformance.proto. The actual test messages (TestAllTypesProto3/Proto2)
+//! are decoded and re-encoded to validate the implementation.
 
 const std = @import("std");
 const upb_zig = @import("upb_zig");
+const conformance_pb = @import("conformance_conformance");
 
 // Import generated proto modules for the test messages
 const proto3 = @import("google_protobuf_test_messages_proto3");
 const proto2 = @import("google_protobuf_test_messages_proto2");
 const proto3_editions = @import("editions_golden_test_messages_proto3_editions");
 const proto2_editions = @import("editions_golden_test_messages_proto2_editions");
-
-/// Wire types in protobuf encoding
-const WireType = enum(u3) {
-    varint = 0,
-    i64 = 1,
-    len = 2,
-    sgroup = 3,
-    egroup = 4,
-    i32 = 5,
-};
-
-/// ConformanceRequest payload types (oneof)
-const PayloadCase = enum {
-    none,
-    protobuf_payload, // field 1
-    json_payload, // field 2
-    jspb_payload, // field 7
-    text_payload, // field 8
-};
-
-/// Parsed ConformanceRequest
-const ConformanceRequest = struct {
-    payload_case: PayloadCase = .none,
-    payload: []const u8 = "",
-    requested_output_format: i32 = 0,
-    message_type: []const u8 = "",
-    test_category: i32 = 0,
-};
-
-/// Read a varint from a buffer, return the value and bytes consumed
-fn readVarint(data: []const u8) !struct { value: u64, consumed: usize } {
-    var value: u64 = 0;
-    var shift: u6 = 0;
-    for (data, 0..) |byte, i| {
-        value |= @as(u64, byte & 0x7f) << shift;
-        if (byte & 0x80 == 0) {
-            return .{ .value = value, .consumed = i + 1 };
-        }
-        shift +%= 7;
-        if (shift >= 64) return error.VarintTooLong;
-    }
-    return error.UnexpectedEof;
-}
-
-/// Parse a ConformanceRequest from wire format
-fn parseConformanceRequest(data: []const u8) !ConformanceRequest {
-    var req = ConformanceRequest{};
-    var pos: usize = 0;
-
-    while (pos < data.len) {
-        // Read tag
-        const tag_result = try readVarint(data[pos..]);
-        pos += tag_result.consumed;
-
-        const field_num: u32 = @intCast(tag_result.value >> 3);
-        const wire_type: u3 = @intCast(tag_result.value & 0x7);
-
-        switch (wire_type) {
-            @intFromEnum(WireType.varint) => {
-                const val_result = try readVarint(data[pos..]);
-                pos += val_result.consumed;
-
-                switch (field_num) {
-                    3 => req.requested_output_format = @intCast(val_result.value),
-                    5 => req.test_category = @intCast(val_result.value),
-                    else => {}, // skip unknown varint fields
-                }
-            },
-            @intFromEnum(WireType.len) => {
-                const len_result = try readVarint(data[pos..]);
-                pos += len_result.consumed;
-                const len: usize = @intCast(len_result.value);
-
-                if (pos + len > data.len) return error.UnexpectedEof;
-                const field_data = data[pos .. pos + len];
-                pos += len;
-
-                switch (field_num) {
-                    1 => {
-                        req.payload_case = .protobuf_payload;
-                        req.payload = field_data;
-                    },
-                    2 => {
-                        req.payload_case = .json_payload;
-                        req.payload = field_data;
-                    },
-                    4 => req.message_type = field_data,
-                    7 => {
-                        req.payload_case = .jspb_payload;
-                        req.payload = field_data;
-                    },
-                    8 => {
-                        req.payload_case = .text_payload;
-                        req.payload = field_data;
-                    },
-                    else => {}, // skip unknown length-delimited fields
-                }
-            },
-            @intFromEnum(WireType.i64) => {
-                pos += 8; // skip 64-bit fixed
-            },
-            @intFromEnum(WireType.i32) => {
-                pos += 4; // skip 32-bit fixed
-            },
-            else => return error.UnsupportedWireType,
-        }
-    }
-
-    return req;
-}
-
-/// Write a varint to a buffer, return bytes written
-fn writeVarint(value: u64, buf: []u8) usize {
-    var v = value;
-    var i: usize = 0;
-    while (v >= 0x80) : (i += 1) {
-        buf[i] = @intCast((v & 0x7f) | 0x80);
-        v >>= 7;
-    }
-    buf[i] = @intCast(v);
-    return i + 1;
-}
-
-/// Encode a "skipped" ConformanceResponse
-/// Field 5, wire type 2 (length-delimited string)
-fn encodeSkippedResponse(message: []const u8, buf: []u8) usize {
-    // Tag: (5 << 3) | 2 = 42
-    buf[0] = 42;
-    var pos: usize = 1;
-
-    // Length as varint
-    pos += writeVarint(message.len, buf[pos..]);
-
-    // String data
-    @memcpy(buf[pos .. pos + message.len], message);
-    pos += message.len;
-
-    return pos;
-}
-
-/// Encode an empty "protobuf_payload" ConformanceResponse (will fail tests)
-/// Field 3, wire type 2 (length-delimited bytes), length 0
-fn encodeEmptyProtobufResponse(buf: []u8) usize {
-    // Tag: (3 << 3) | 2 = 26
-    buf[0] = 26;
-    // Length: 0
-    buf[1] = 0;
-    return 2;
-}
-
-/// Encode an empty "json_payload" ConformanceResponse (will fail tests)
-/// Field 4, wire type 2 (length-delimited string), length 0
-fn encodeEmptyJsonResponse(buf: []u8) usize {
-    // Tag: (4 << 3) | 2 = 34
-    buf[0] = 34;
-    // Length: 0
-    buf[1] = 0;
-    return 2;
-}
-
-/// Encode an empty "text_payload" ConformanceResponse (will fail tests)
-/// Field 8, wire type 2 (length-delimited string), length 0
-fn encodeEmptyTextResponse(buf: []u8) usize {
-    // Tag: (8 << 3) | 2 = 66
-    buf[0] = 66;
-    // Length: 0
-    buf[1] = 0;
-    return 2;
-}
-
-/// Encode a "parse_error" ConformanceResponse
-/// Field 1, wire type 2 (length-delimited string)
-fn encodeParseErrorResponse(message: []const u8, buf: []u8) usize {
-    // Tag: (1 << 3) | 2 = 10
-    buf[0] = 10;
-    var pos: usize = 1;
-
-    // Length as varint
-    pos += writeVarint(message.len, buf[pos..]);
-
-    // String data
-    @memcpy(buf[pos .. pos + message.len], message);
-    pos += message.len;
-
-    return pos;
-}
-
-/// Encode a "runtime_error" ConformanceResponse
-/// Field 2, wire type 2 (length-delimited string)
-fn encodeErrorResponse(message: []const u8, buf: []u8) usize {
-    // Tag: (2 << 3) | 2 = 18
-    buf[0] = 18;
-    var pos: usize = 1;
-
-    // Length as varint
-    pos += writeVarint(message.len, buf[pos..]);
-
-    // String data
-    @memcpy(buf[pos .. pos + message.len], message);
-    pos += message.len;
-
-    return pos;
-}
-
-/// Encode a "serialize_error" ConformanceResponse
-/// Field 6, wire type 2 (length-delimited string)
-fn encodeSerializeErrorResponse(message: []const u8, buf: []u8) usize {
-    // Tag: (6 << 3) | 2 = 50
-    buf[0] = 50;
-    var pos: usize = 1;
-
-    // Length as varint
-    pos += writeVarint(message.len, buf[pos..]);
-
-    // String data
-    @memcpy(buf[pos .. pos + message.len], message);
-    pos += message.len;
-
-    return pos;
-}
-
-/// Encode a "protobuf_payload" ConformanceResponse with actual data
-/// Field 3, wire type 2 (length-delimited bytes)
-fn encodeProtobufResponse(data: []const u8, buf: []u8) usize {
-    // Tag: (3 << 3) | 2 = 26
-    buf[0] = 26;
-    var pos: usize = 1;
-
-    // Length as varint
-    pos += writeVarint(data.len, buf[pos..]);
-
-    // Bytes data
-    @memcpy(buf[pos .. pos + data.len], data);
-    pos += data.len;
-
-    return pos;
-}
-
-/// Encode a "json_payload" ConformanceResponse with actual data
-/// Field 4, wire type 2 (length-delimited string)
-fn encodeJsonResponse(data: []const u8, buf: []u8) usize {
-    // Tag: (4 << 3) | 2 = 34
-    buf[0] = 34;
-    var pos: usize = 1;
-
-    // Length as varint
-    pos += writeVarint(data.len, buf[pos..]);
-
-    // String data
-    @memcpy(buf[pos .. pos + data.len], data);
-    pos += data.len;
-
-    return pos;
-}
 
 /// Read exactly `len` bytes from a file descriptor into `buf`.
 fn readFullyFd(fd: std.posix.fd_t, buf: []u8) !void {
@@ -294,161 +41,123 @@ fn writeFullyFd(fd: std.posix.fd_t, buf: []const u8) !void {
     }
 }
 
-/// Output format enum (from conformance.proto WireFormat)
-const WireFormat = enum(i32) {
-    UNSPECIFIED = 0,
-    PROTOBUF = 1,
-    JSON = 2,
-    JSPB = 3,
-    TEXT_FORMAT = 4,
-};
-
-/// Test category enum (from conformance.proto TestCategory)
-const TestCategory = enum(i32) {
-    UNSPECIFIED_TEST = 0,
-    BINARY_TEST = 1,
-    JSON_TEST = 2,
-    JSON_IGNORE_UNKNOWN_PARSING_TEST = 3,
-    JSPB_TEST = 4,
-    TEXT_FORMAT_TEST = 5,
-};
-
 /// Process a single conformance request and produce a response.
-fn runTest(request: ConformanceRequest, response_buf: []u8, allocator: std.mem.Allocator) usize {
-    // Skip unsupported input formats
-    const is_protobuf_input = request.payload_case == .protobuf_payload;
-    const is_json_input = request.payload_case == .json_payload;
+fn runTest(req: conformance_pb.ConformanceRequest, arena: upb_zig.Arena) conformance_pb.ConformanceResponse {
+    // Determine input format via oneof
+    const payload_case = req.payloadCase();
+
+    const is_protobuf_input = payload_case == .protobuf_payload;
+    const is_json_input = payload_case == .json_payload;
 
     if (!is_protobuf_input and !is_json_input) {
-        return switch (request.payload_case) {
-            .text_payload => encodeSkippedResponse("Text format input not supported", response_buf),
-            .jspb_payload => encodeSkippedResponse("JSPB input not supported", response_buf),
-            .none => encodeErrorResponse("No payload provided in request", response_buf),
-            else => encodeSkippedResponse("Unknown input format", response_buf),
+        return switch (payload_case) {
+            .text_payload => makeSkipped(arena, "Text format input not supported"),
+            .jspb_payload => makeSkipped(arena, "JSPB input not supported"),
+            else => makeRuntimeError(arena, "No payload provided in request"),
         };
     }
 
     // Check output format
-    const output_format: WireFormat = @enumFromInt(request.requested_output_format);
+    const output_format = req.getRequestedOutputFormat();
     const is_protobuf_output = output_format == .PROTOBUF or output_format == .UNSPECIFIED;
     const is_json_output = output_format == .JSON;
 
     if (!is_protobuf_output and !is_json_output) {
         return switch (output_format) {
-            .JSPB => encodeSkippedResponse("JSPB output not supported", response_buf),
-            .TEXT_FORMAT => encodeSkippedResponse("Text format output not supported", response_buf),
-            else => encodeSkippedResponse("Unknown output format", response_buf),
+            .JSPB => makeSkipped(arena, "JSPB output not supported"),
+            .TEXT_FORMAT => makeSkipped(arena, "Text format output not supported"),
+            else => makeSkipped(arena, "Unknown output format"),
         };
     }
 
-    // Create an arena for the message
-    const arena = upb_zig.Arena.init(allocator) catch {
-        return encodeErrorResponse("Failed to create arena", response_buf);
-    };
-    defer arena.deinit();
-
     // Determine JSON decode options based on test category
-    const test_category: TestCategory = @enumFromInt(request.test_category);
+    const test_category = req.getTestCategory();
     const json_decode_opts = upb_zig.JsonDecodeOptions{
         .ignore_unknown = (test_category == .JSON_IGNORE_UNKNOWN_PARSING_TEST),
     };
 
+    const payload = if (is_protobuf_input) req.getProtobufPayload() else req.getJsonPayload();
+    const message_type = req.getMessageType();
+
     // Process based on message type
-    if (std.mem.eql(u8, request.message_type, "protobuf_test_messages.proto3.TestAllTypesProto3")) {
-        // Decode
-        const msg = if (is_protobuf_input)
-            proto3.TestAllTypesProto3.decode(arena, request.payload) catch {
-                return encodeParseErrorResponse("Failed to decode TestAllTypesProto3 from protobuf", response_buf);
-            }
-        else
-            proto3.TestAllTypesProto3.decodeJson(arena, request.payload, json_decode_opts) catch {
-                return encodeParseErrorResponse("Failed to decode TestAllTypesProto3 from JSON", response_buf);
-            };
-
-        // Encode to requested format
-        if (is_protobuf_output) {
-            const encoded = msg.encode() catch {
-                return encodeSerializeErrorResponse("Failed to encode TestAllTypesProto3 to protobuf", response_buf);
-            };
-            return encodeProtobufResponse(encoded, response_buf);
-        } else {
-            const encoded = msg.encodeJson(.{}) catch {
-                return encodeSerializeErrorResponse("Failed to encode TestAllTypesProto3 to JSON", response_buf);
-            };
-            return encodeJsonResponse(encoded, response_buf);
-        }
-    } else if (std.mem.eql(u8, request.message_type, "protobuf_test_messages.proto2.TestAllTypesProto2")) {
-        // Decode
-        const msg = if (is_protobuf_input)
-            proto2.TestAllTypesProto2.decode(arena, request.payload) catch {
-                return encodeParseErrorResponse("Failed to decode TestAllTypesProto2 from protobuf", response_buf);
-            }
-        else
-            proto2.TestAllTypesProto2.decodeJson(arena, request.payload, json_decode_opts) catch {
-                return encodeParseErrorResponse("Failed to decode TestAllTypesProto2 from JSON", response_buf);
-            };
-
-        // Encode to requested format
-        if (is_protobuf_output) {
-            const encoded = msg.encode() catch {
-                return encodeSerializeErrorResponse("Failed to encode TestAllTypesProto2 to protobuf", response_buf);
-            };
-            return encodeProtobufResponse(encoded, response_buf);
-        } else {
-            const encoded = msg.encodeJson(.{}) catch {
-                return encodeSerializeErrorResponse("Failed to encode TestAllTypesProto2 to JSON", response_buf);
-            };
-            return encodeJsonResponse(encoded, response_buf);
-        }
-    } else if (std.mem.eql(u8, request.message_type, "protobuf_test_messages.editions.proto3.TestAllTypesProto3")) {
-        // Decode editions proto3
-        const msg = if (is_protobuf_input)
-            proto3_editions.TestAllTypesProto3.decode(arena, request.payload) catch {
-                return encodeParseErrorResponse("Failed to decode TestAllTypesProto3 (editions) from protobuf", response_buf);
-            }
-        else
-            proto3_editions.TestAllTypesProto3.decodeJson(arena, request.payload, json_decode_opts) catch {
-                return encodeParseErrorResponse("Failed to decode TestAllTypesProto3 (editions) from JSON", response_buf);
-            };
-
-        // Encode to requested format
-        if (is_protobuf_output) {
-            const encoded = msg.encode() catch {
-                return encodeSerializeErrorResponse("Failed to encode TestAllTypesProto3 (editions) to protobuf", response_buf);
-            };
-            return encodeProtobufResponse(encoded, response_buf);
-        } else {
-            const encoded = msg.encodeJson(.{}) catch {
-                return encodeSerializeErrorResponse("Failed to encode TestAllTypesProto3 (editions) to JSON", response_buf);
-            };
-            return encodeJsonResponse(encoded, response_buf);
-        }
-    } else if (std.mem.eql(u8, request.message_type, "protobuf_test_messages.editions.proto2.TestAllTypesProto2")) {
-        // Decode editions proto2
-        const msg = if (is_protobuf_input)
-            proto2_editions.TestAllTypesProto2.decode(arena, request.payload) catch {
-                return encodeParseErrorResponse("Failed to decode TestAllTypesProto2 (editions) from protobuf", response_buf);
-            }
-        else
-            proto2_editions.TestAllTypesProto2.decodeJson(arena, request.payload, json_decode_opts) catch {
-                return encodeParseErrorResponse("Failed to decode TestAllTypesProto2 (editions) from JSON", response_buf);
-            };
-
-        // Encode to requested format
-        if (is_protobuf_output) {
-            const encoded = msg.encode() catch {
-                return encodeSerializeErrorResponse("Failed to encode TestAllTypesProto2 (editions) to protobuf", response_buf);
-            };
-            return encodeProtobufResponse(encoded, response_buf);
-        } else {
-            const encoded = msg.encodeJson(.{}) catch {
-                return encodeSerializeErrorResponse("Failed to encode TestAllTypesProto2 (editions) to JSON", response_buf);
-            };
-            return encodeJsonResponse(encoded, response_buf);
-        }
+    if (std.mem.eql(u8, message_type, "protobuf_test_messages.proto3.TestAllTypesProto3")) {
+        return doRoundTrip(proto3.TestAllTypesProto3, arena, payload, is_protobuf_input, is_protobuf_output, json_decode_opts);
+    } else if (std.mem.eql(u8, message_type, "protobuf_test_messages.proto2.TestAllTypesProto2")) {
+        return doRoundTrip(proto2.TestAllTypesProto2, arena, payload, is_protobuf_input, is_protobuf_output, json_decode_opts);
+    } else if (std.mem.eql(u8, message_type, "protobuf_test_messages.editions.proto3.TestAllTypesProto3")) {
+        return doRoundTrip(proto3_editions.TestAllTypesProto3, arena, payload, is_protobuf_input, is_protobuf_output, json_decode_opts);
+    } else if (std.mem.eql(u8, message_type, "protobuf_test_messages.editions.proto2.TestAllTypesProto2")) {
+        return doRoundTrip(proto2_editions.TestAllTypesProto2, arena, payload, is_protobuf_input, is_protobuf_output, json_decode_opts);
     } else {
-        return encodeSkippedResponse("Unsupported message type", response_buf);
+        return makeSkipped(arena, "Unsupported message type");
     }
+}
+
+/// Decode a test message, re-encode it in the requested format, and build a ConformanceResponse.
+fn doRoundTrip(
+    comptime MsgType: type,
+    arena: upb_zig.Arena,
+    payload: []const u8,
+    is_protobuf_input: bool,
+    is_protobuf_output: bool,
+    json_decode_opts: upb_zig.JsonDecodeOptions,
+) conformance_pb.ConformanceResponse {
+    // Decode
+    const msg = if (is_protobuf_input)
+        MsgType.decode(arena, payload) catch {
+            return makeParseError(arena, "Failed to decode from protobuf");
+        }
+    else
+        MsgType.decodeJson(arena, payload, json_decode_opts) catch {
+            return makeParseError(arena, "Failed to decode from JSON");
+        };
+
+    // Encode to requested format
+    if (is_protobuf_output) {
+        const encoded = msg.encode() catch {
+            return makeSerializeError(arena, "Failed to encode to protobuf");
+        };
+        var resp = conformance_pb.ConformanceResponse.init(arena) catch {
+            return makeRuntimeError(arena, "Failed to create response");
+        };
+        resp.setProtobufPayload(encoded);
+        return resp;
+    } else {
+        const encoded = msg.encodeJson(.{}) catch {
+            return makeSerializeError(arena, "Failed to encode to JSON");
+        };
+        var resp = conformance_pb.ConformanceResponse.init(arena) catch {
+            return makeRuntimeError(arena, "Failed to create response");
+        };
+        resp.setJsonPayload(encoded);
+        return resp;
+    }
+}
+
+// --- Response helpers ---
+
+fn makeSkipped(arena: upb_zig.Arena, msg: []const u8) conformance_pb.ConformanceResponse {
+    var resp = conformance_pb.ConformanceResponse.init(arena) catch return undefined;
+    resp.setSkipped(msg);
+    return resp;
+}
+
+fn makeParseError(arena: upb_zig.Arena, msg: []const u8) conformance_pb.ConformanceResponse {
+    var resp = conformance_pb.ConformanceResponse.init(arena) catch return undefined;
+    resp.setParseError(msg);
+    return resp;
+}
+
+fn makeRuntimeError(arena: upb_zig.Arena, msg: []const u8) conformance_pb.ConformanceResponse {
+    var resp = conformance_pb.ConformanceResponse.init(arena) catch return undefined;
+    resp.setRuntimeError(msg);
+    return resp;
+}
+
+fn makeSerializeError(arena: upb_zig.Arena, msg: []const u8) conformance_pb.ConformanceResponse {
+    var resp = conformance_pb.ConformanceResponse.init(arena) catch return undefined;
+    resp.setSerializeError(msg);
+    return resp;
 }
 
 /// Serve a single conformance request from stdin, write response to stdout.
@@ -474,28 +183,38 @@ fn serveConformanceRequest(allocator: std.mem.Allocator) !bool {
     defer allocator.free(request_data);
     try readFullyFd(stdin, request_data);
 
-    // Response buffer (generous size for any response message)
-    var response_buf: [4096]u8 = undefined;
-    var response_len: usize = 0;
+    // Create arena for this request/response cycle
+    var arena = try upb_zig.Arena.init(allocator);
+    defer arena.deinit();
 
-    // Parse the ConformanceRequest
-    const request = parseConformanceRequest(request_data) catch {
-        response_len = encodeErrorResponse("Failed to parse ConformanceRequest", &response_buf);
+    // Decode request using generated conformance proto
+    const request = conformance_pb.ConformanceRequest.decode(arena, request_data) catch {
+        var resp = try conformance_pb.ConformanceResponse.init(arena);
+        resp.setRuntimeError("Failed to parse ConformanceRequest");
+        const encoded = try resp.encode();
         var out_len_buf: [4]u8 = undefined;
-        std.mem.writeInt(u32, &out_len_buf, @intCast(response_len), .little);
+        std.mem.writeInt(u32, &out_len_buf, @intCast(encoded.len), .little);
         try writeFullyFd(stdout, &out_len_buf);
-        try writeFullyFd(stdout, response_buf[0..response_len]);
+        try writeFullyFd(stdout, encoded);
         return true;
     };
 
     // Process the request
-    response_len = runTest(request, &response_buf, allocator);
+    const response = runTest(request, arena);
 
-    // Write response with length prefix
+    // Encode and write response
+    const response_bytes = response.encode() catch {
+        // Last resort: if we can't even encode the response, write an empty response
+        var out_len_buf: [4]u8 = undefined;
+        std.mem.writeInt(u32, &out_len_buf, 0, .little);
+        try writeFullyFd(stdout, &out_len_buf);
+        return true;
+    };
+
     var out_len_buf: [4]u8 = undefined;
-    std.mem.writeInt(u32, &out_len_buf, @intCast(response_len), .little);
+    std.mem.writeInt(u32, &out_len_buf, @intCast(response_bytes.len), .little);
     try writeFullyFd(stdout, &out_len_buf);
-    try writeFullyFd(stdout, response_buf[0..response_len]);
+    try writeFullyFd(stdout, response_bytes);
 
     return true;
 }

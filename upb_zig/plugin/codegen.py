@@ -268,6 +268,25 @@ pub const ${message.name} = struct {
     };
 % endfor
 
+    // Oneofs
+% for oneof_name, oneof_fields in oneofs:
+    pub const ${pascal_case(oneof_name)}Case = enum {
+    % for f in oneof_fields:
+        ${escape_zig_keyword(f.name)},
+    % endfor
+        not_set,
+    };
+
+    pub fn ${snake_to_camel(oneof_name)}Case(self: *const ${message.name}) ${pascal_case(oneof_name)}Case {
+    % for f in oneof_fields:
+        if (getField(FieldNumber.${escape_zig_keyword(f.name)})) |fd| {
+            if (upb_zig.hasField(self._msg, fd)) return .${escape_zig_keyword(f.name)};
+        }
+    % endfor
+        return .not_set;
+    }
+% endfor
+
 % for field in message.field:
     /// ${field.name} field (${field_type_name(field)}, field number ${field.number})
 % if is_repeated(field):
@@ -519,6 +538,16 @@ def generate_message(message: DescriptorProto, file_name: str, resolve_type=None
         else:
             return PROTO_TYPE_TO_ZIG.get(field.type, "anyopaque")
 
+    # Collect oneofs (skip proto3 synthetic oneofs for optional fields)
+    oneofs = []
+    for i, oneof in enumerate(message.oneof_decl):
+        if oneof.name.startswith('_'):
+            continue  # synthetic oneof for proto3 optional
+        oneof_fields = [f for f in message.field
+                        if f.HasField('oneof_index') and f.oneof_index == i]
+        if oneof_fields:
+            oneofs.append((oneof.name, oneof_fields))
+
     return MESSAGE_TEMPLATE.render(
         message=message,
         file_name=file_name,
@@ -537,6 +566,7 @@ def generate_message(message: DescriptorProto, file_name: str, resolve_type=None
         array_getter_fn=array_getter_fn,
         array_appender_fn=array_appender_fn,
         escape_zig_keyword=escape_zig_keyword,
+        oneofs=oneofs,
     )
 
 

@@ -461,6 +461,13 @@ pub fn setString(msg: *c.upb_Message, field: *const c.upb_MiniTableField, value:
     c.upb_zig_Message_SetString(msg, field, toStringView(value), null);
 }
 
+// --- Field Presence ---
+
+/// Check if a field is set on a message. Works for oneof members, optional fields, etc.
+pub fn hasField(msg: *const c.upb_Message, field: *const c.upb_MiniTableField) bool {
+    return c.upb_zig_Message_HasField(msg, field);
+}
+
 // --- Array (repeated field) Operations ---
 
 /// Get the number of elements in a repeated field.

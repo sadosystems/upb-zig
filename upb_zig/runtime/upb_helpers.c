@@ -245,6 +245,16 @@ bool upb_zig_Array_AppendMessage(upb_Array* arr, const upb_Message* val, upb_Are
 }
 
 // ============================================================================
+// Field presence check
+// ============================================================================
+
+bool upb_zig_Message_HasField(
+    const upb_Message* msg,
+    const upb_MiniTableField* field) {
+  return upb_Message_HasBaseField(msg, field);
+}
+
+// ============================================================================
 // Sub-message (nested message) operations
 // ============================================================================
 
