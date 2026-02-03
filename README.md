@@ -34,7 +34,7 @@ todo add Reflective usage instructions
 ## Why?
 Why make this when [zig-protobuf](https://github.com/Arwalk/zig-protobuf) exists?
 
-I was working on a project in zig that required the use of protobuf. In the past I reached for some protobuf implementation on github and just assumed it would be conformant, way later in development I tracked down a highly annoying bug that was caused by the fact that the protobuf library I was using was not in fact conformant. I vowed to never again use a non conformant implementation of protobuf.
+I was working on a project in zig that required the use of protobuf. On a different project, in a different language I once reached for a protobuf implementation on github and just assumed it would be conformant, way later in development I tracked down a highly annoying bug that was caused by the fact that the library I was using was not in fact conformant. I vowed to never again use a non-conformant implementation of protobuf.
 
 So when I found [zig-protobuf](https://github.com/Arwalk/zig-protobuf) the first thing I looked for was conformance tests, then to my dismay I found [this issue](https://github.com/Arwalk/zig-protobuf/issues/27). long story short zig-protobuf is not tested against the conformance test suite provided by Google.
 
