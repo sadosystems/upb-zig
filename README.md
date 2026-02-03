@@ -1,7 +1,7 @@
 # upb-zig
 A Protocol Buffers code genner and runtime library for Zig created by wmurra.
 
-upb-zig is the only Zig Protobuf library that passes all the Protobuf conformance tests. That's actually _NOT_ as impressive as it sounds! [Here is an explanation](). Despite that seemingly impressive test coverage, this library is not totally ready for production use, it has API and performance issues that may or may not ever be worked out.
+upb-zig is the only Zig Protobuf library that passes all the Protobuf conformance tests. That's actually _NOT_ as impressive as it sounds! [Here is an explanation](https://github.com/sadosystems/upb-zig/tree/master?tab=readme-ov-file#why). Despite that seemingly impressive test coverage, this library is not totally ready for production use, it has API and performance issues that may or may not ever be worked out.
 
 also holy bloat this project will not appeal to zig-like sensibilities. do not be mislead by the u in upb there is nothing micro about this. the code generator is distributed as either a bazel rule or a Python exectuable on Pypi so you will need a Python interpreter to run it and the runtime is not pure zig. it is mostly C.
 
@@ -49,7 +49,7 @@ in particular I did not want to handle:
 - bootstrapping (protoc plugins are authored as executables that take serialized Descriptors, which are serialized using... protobuf!)
 - many edge cases I don't even know about
 
-## How it works
+## How it Works
 but then I had an idea so dumb that it wraps all the way around to being kinda smart. 
 - A. Use a language that already has protobuf support for the code gen so I can avoid the bootstrapping stuff
 - B. Don't write a runtime in Zig at all, just wrap an existing runtime.  
