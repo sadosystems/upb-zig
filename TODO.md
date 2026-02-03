@@ -1,3 +1,4 @@
+Add text format support (currently all 883 text format tests are skipped)
 Add `zig-protobuf` as external Bazel dependency (get it added to BCR or rules_zig)
 Write conformance testee using zig-protobuf's API
 update conformance suite table gen to and compare results across both APIs 

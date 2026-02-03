@@ -93,13 +93,25 @@ def generate_report(result: ConformanceResult, impl_name: str = "upb-zig") -> st
     """Generate a markdown report from parsed results."""
     lines = []
 
+    # Total test counts for edition 2023 (from protobuf-conformance baseline)
+    # https://github.com/bufbuild/protobuf-conformance
+    TOTAL_REQUIRED = 4267
+    TOTAL_RECOMMENDED = 1300
+
     # Count failures by (requirement_level, proto_version, test_format)
     failed_by_category: defaultdict[tuple[str, str, str], int] = defaultdict(int)
+    failed_by_req: defaultdict[str, int] = defaultdict(int)
     for test in result.failed:
         failed_by_category[(test.requirement_level, test.proto_version, test.test_format)] += 1
+        failed_by_req[test.requirement_level] += 1
 
     total_run = result.num_passed + result.num_failed
     overall_pct = f"{100 * result.num_passed / total_run:.1f}%" if total_run > 0 else "N/A"
+
+    req_failures = failed_by_req.get("Required", 0)
+    rec_failures = failed_by_req.get("Recommended", 0)
+    req_pct = f"{100 * (TOTAL_REQUIRED - req_failures) / TOTAL_REQUIRED:.1f}%"
+    rec_pct = f"{100 * (TOTAL_RECOMMENDED - rec_failures) / TOTAL_RECOMMENDED:.1f}%"
 
     def get_status(req: str, proto: str | None, fmt: str) -> str:
         """Get status for a category. If proto is None, combine Proto2 and Proto3."""
@@ -113,12 +125,12 @@ def generate_report(result: ConformanceResult, impl_name: str = "upb-zig") -> st
     # Build table in desired format
     lines.append(f"| Category | {impl_name} | zig-protobuf |")
     lines.append("|----------|-------------|--------------|")
-    lines.append("| **Required Tests** | | |")
+    lines.append(f"| **Required** | {req_pct} | N/A |")
     lines.append(f"| Wire format (proto2) | {get_status('Required', 'Proto2', 'Wire format')} | N/A |")
     lines.append(f"| Wire format (proto3) | {get_status('Required', 'Proto3', 'Wire format')} | N/A |")
     lines.append(f"| JSON (proto2) | {get_status('Required', 'Proto2', 'JSON')} | N/A |")
     lines.append(f"| JSON (proto3) | {get_status('Required', 'Proto3', 'JSON')} | N/A |")
-    lines.append("| **Recommended Tests** | | |")
+    lines.append(f"| **Recommended** | {rec_pct} | N/A |")
     lines.append(f"| Wire format | {get_status('Recommended', None, 'Wire format')} | N/A |")
     lines.append(f"| JSON | {get_status('Recommended', None, 'JSON')} | N/A |")
     lines.append(f"| Text format | {get_status('Recommended', None, 'Text format')} | N/A |")

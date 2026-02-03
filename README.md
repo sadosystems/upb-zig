@@ -79,12 +79,12 @@ The current implementations being tested are:
 <!-- BEGIN CONFORMANCE TABLE -->
 | Category | upb-zig | zig-protobuf |
 |----------|-------------|--------------|
-| **Required Tests** | | |
+| **Required** | 99.7% | N/A |
 | Wire format (proto2) | 0 failures | N/A |
 | Wire format (proto3) | 0 failures | N/A |
 | JSON (proto2) | 4 failures | N/A |
 | JSON (proto3) | 8 failures | N/A |
-| **Recommended Tests** | | |
+| **Recommended** | 99.1% | N/A |
 | Wire format | 0 failures | N/A |
 | JSON | 12 failures | N/A |
 | Text format | 0 failures | N/A |
