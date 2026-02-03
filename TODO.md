@@ -2,8 +2,6 @@ Add `zig-protobuf` as external Bazel dependency
 Write conformance testee using zig-protobuf's API
 Run conformance suite and capture results
 Parse conformance test output for both implementations
-[DONE] Generate markdown table with:
-[DONE] Automate report generation as Bazel target
 README.md with quickstart guide
 API documentation for runtime library
 Example usage in a Zig project
