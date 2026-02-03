@@ -36,7 +36,7 @@ zig_proto_library(
 zig_test(
     name = "basic_conformance",
     main = "basic_conformance.zig",
-    deps = [":conformance_pb"],
+    deps = [":conformance_pb", "//upb_zig/runtime:upb_zig"],
     zigopts = ["-lc"],
 )
 
