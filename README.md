@@ -3,7 +3,7 @@ A Protocol Buffers code genner and runtime library for Zig created by wmurra.
 
 upb-zig is the only Zig Protobuf library that passes all the Protobuf conformance tests. That's actually _NOT_ as impressive as it sounds! [Here is an explanation](). Despite that seemingly impressive test coverage, this library is not totally ready for production use, it has API and performance issues that may or may not ever be worked out.
 
-also holy bloat this project will not appeal to zig-like sensibilities. do not be mislead by the u in upb there is nothing micro about this. the code generator is distributed as either a bazel rule or a python exectuable on Pypi so you will need a python interpreter to run it and the runtime is not pure zig. it is mostly C.
+also holy bloat this project will not appeal to zig-like sensibilities. do not be mislead by the u in upb there is nothing micro about this. the code generator is distributed as either a bazel rule or a Python exectuable on Pypi so you will need a Python interpreter to run it and the runtime is not pure zig. it is mostly C.
 
 You should probably use [zig-protobuf](https://github.com/Arwalk/zig-protobuf) instead unless you absolutely need full conformance.
 
@@ -16,7 +16,7 @@ pip install upb-zig
 ```
 
 ### Bazel
-```python
+```Python
 bazel_dep(name = "upb-zig", version = "1.0.0")
 ```
 
@@ -34,37 +34,37 @@ todo add Reflective usage instructions
 ## Why?
 Why make this when [zig-protobuf](https://github.com/Arwalk/zig-protobuf) exists?
 
-I was working on a project in zig that required the use of protobuf. On a different project, in a different language I once reached for a protobuf implementation on github and just assumed it would be conformant, way later in development I tracked down a highly annoying bug that was caused by the fact that the library I was using was not in fact conformant. I vowed to never again use a non-conformant implementation of protobuf.
+I was working on a project in Zig that required the use of protobuf. On a different project, in a different language I once reached for a protobuf implementation on github and just assumed it would be conformant, way later in development I tracked down a highly annoying bug that was caused by the fact that the library I was using was not in fact conformant. I vowed to never again use a non-conformant implementation of protobuf.
 
 So when I found [zig-protobuf](https://github.com/Arwalk/zig-protobuf) the first thing I looked for was conformance tests, then to my dismay I found [this issue](https://github.com/Arwalk/zig-protobuf/issues/27). Long-story-short zig-protobuf is not tested against the conformance test suite provided by Google.
 
-So I wired them up. [Here is the result](https://todo_make_this_a_real_link)
+So I wired them up. [Here is the result](https://todo_make_this_a_real_link).
 
 I was depressed when I discovered zig-protobuf is not conformant. Honestly I was really starting to hate protobuf and I did not want to write my own implementation. The core may be [simple enough](https://protobuf.dev/programming-guides/encoding/) but tracking down every little edge case is a nightmare.
 
 in particular I did not want to handle:
 - [proto3 vs proto2 vs editions](https://protobuf.dev/editions/overview/)
 - [json enc/dec](https://protobuf.dev/programming-guides/json/) especially with [well-known types](https://protobuf.dev/reference/protobuf/google.protobuf/#any)
-- oneofs, maps, unknown fields, extensions, etc.
-- bootstrapping (protoc plugins are authored as executables that take take serialized Descriptors, which are seriazlied using... protobuf!)
+- oneofs, unknown fields, extensions, etc.
+- bootstrapping (protoc plugins are authored as executables that take serialized Descriptors, which are serialized using... protobuf!)
 - many edge cases I don't even know about
 
 but then I had an idea so dumb that it wraps all the way around to being kinda smart. 
 - A. Use a language that already has protobuf support for the code gen so I can avoid the bootstrapping stuff
-- B. don't write a runtime in zig at all, just wrap an existing runtime.  
+- B. don't write a runtime in Zig at all, just wrap an existing runtime.  
 
-so the code generator is written in python using mako templates and the runtime the generated code calls into is just a wrapper around the C [upb](https://github.com/protocolbuffers/protobuf/tree/main/upb) protobuf runtime (hence the name of this project **upb**-zig) 
+The code generator is written in Python using mako templates. The runtime that the generated code calls into is just a wrapper around the C [upb](https://github.com/protocolbuffers/protobuf/tree/main/upb) protobuf runtime (hence the name of this project **upb**-zig) 
 
-The actual encode decode logic is in c and fully conformant[*](https://github.com/protocolbuffers/protobuf/blob/main/upb/conformance/conformance_upb_failures.txt) for free. The only zig parts are a thin wrapper around upb and the typed facade into that wrapper which is generated by the python code.  
+The actual encode decode logic is in the C runtime and it is fully conformant[*](https://github.com/protocolbuffers/protobuf/blob/main/upb/conformance/conformance_upb_failures.txt) for free. The only Zig parts are a thin wrapper around upb and the typed facade into that wrapper which is generated by the Python code.  
 
-This is sort of silly (really silly) and un-zig-like. The upb runtime is designed to be wrapped by scripting languages, it is the heart of the python ruby and php implementations. as far as I know there are no mainstream protobuf implementations in "compiled languages" that wrap upb.
+This is sort of silly (really silly) and un-Zig-like. The upb runtime is designed to be wrapped by scripting languages (it's the heart of the Python Ruby and PHP implementations). As far as I know there are no mainstream protobuf implementations in "compiled languages" that wrap upb.
 
 
 BUT this was very easy to hack together quickly, so I did it.
 
-As a bonus this could also enable a "reflective" / dynamic API. That could be useful for making tools with zig that load proto descriptorPools at runtime.
+As a bonus this could also enable a "reflective" / dynamic API. That could be useful for making tools with Zig that load proto descriptorPools at runtime.
 
-Protobuf implementations have a bootstrapping problem [todo explain why] so a throwaway implementation can have some value. This could be used to help bootstrap an all-zig version. Maybe it could be useful to the [zig-protobuf](https://github.com/Arwalk/zig-protobuf) project? 
+Since Protobuf implementations have a bootstrapping problem a throwaway implementation can have some value. This could be used to help bootstrap an all-Zig version. Maybe it could be useful to the [zig-protobuf](https://github.com/Arwalk/zig-protobuf) project? 
 
 ## Protobuf Conformance Tests
 
