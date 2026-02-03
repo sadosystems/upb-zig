@@ -1,0 +1,31 @@
+actions:
+  - name: "Run All Tests"
+    container_image: "ubuntu-22.04"
+    triggers:
+      push:
+        branches: ["main", "gh-readonly-queue/*"]
+      pull_request:
+        branches: ["*"]
+    steps:
+      - run: >
+          bazel test //... --test_tag_filters=-should_fail,-doc_checking
+          
+  - name: "Check Documentation Up to Date"
+    container_image: "ubuntu-22.04"
+    triggers:
+      push:
+        branches: ["main", "gh-readonly-queue/*"]
+      pull_request:
+        branches: ["*"]
+    steps:
+      - run: bazel test //... --test_tag_filters=doc_checking
+
+  - name: "Build upbzig Plugin"
+    container_image: "ubuntu-22.04"
+    triggers:
+      push:
+        branches: ["main", "gh-readonly-queue/*"]
+      pull_request:
+        branches: ["*"]
+    steps:
+      - run: bazel build //upbzig/plugin:protoc-gen-zig

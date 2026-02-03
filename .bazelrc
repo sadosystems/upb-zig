@@ -1,0 +1,19 @@
+build --action_env=CC=/usr/bin/gcc
+build --action_env=CXX=/usr/bin/g++
+
+test --build_tests_only
+test --test_output=errors
+build --incompatible_enable_cc_toolchain_resolution
+
+# ----- Build Buddy -----
+build --bes_results_url=https://app.buildbuddy.io/invocation/
+build --bes_backend=grpcs://remote.buildbuddy.io
+common --remote_cache=grpcs://remote.buildbuddy.io
+common --remote_timeout=10m
+common --remote_header=x-buildbuddy-api-key=rKUqaM97SiZEossifP0D
+
+build --build_metadata=REPO_URL=https://github.com/sadosystems/upb-zig
+
+common --noslim_profile 
+common --experimental_profile_include_target_label 
+common --experimental_profile_include_primary_output 

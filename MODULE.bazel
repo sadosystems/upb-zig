@@ -1,0 +1,9 @@
+module(
+    name = "upb-zig"
+)
+
+include("//bazel/deps:deps.MODULE.bazel")
+include("//bazel/deps:python.MODULE.bazel")
+include("//bazel/deps:zig.MODULE.bazel")
+
+register_toolchains("//upbzig:zig_proto_toolchain")
