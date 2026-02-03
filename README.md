@@ -1,9 +1,9 @@
 # upb-zig
 A Protocol Buffers code genner and runtime library for Zig created by wmurra.
 
-upb-zig is the only Zig Protobuf library that passes all the Protobuf conformance tests. That's actually _NOT_ as impressive as it sounds! [Here is an explanation](https://github.com/sadosystems/upb-zig/tree/master?tab=readme-ov-file#how-it-works). Despite that seemingly impressive test coverage, this library is not totally ready for production use, it has API and performance issues that may or may not ever be worked out.
+upb-zig is the only Zig Protobuf library that passes [all the Protobuf conformance tests](https://github.com/sadosystems/upb-zig/tree/master?tab=readme-ov-file#protobuf-conformance-tests). That's actually [_NOT_ as impressive as it sounds!](https://github.com/sadosystems/upb-zig/tree/master?tab=readme-ov-file#how-it-works). Despite that seemingly impressive test coverage, this library is not totally ready for production use, it has API and performance issues that may or may not ever be worked out.
 
-also holy bloat this project will not appeal to zig-like sensibilities. do not be mislead by the u in upb there is nothing micro about this. the code generator is distributed as either a bazel rule or a Python exectuable on Pypi so you will need a Python interpreter to run it and the runtime is not pure zig. it is mostly C.
+Also holy bloat this project will not appeal to Zig-like sensibilities. do not be mislead by the u in upb there is nothing micro about this. the code generator is distributed as either a bazel rule or a Python exectuable on Pypi so you will need a Python interpreter to run it and the runtime is not pure zig. it is mostly C.
 
 You should probably use [zig-protobuf](https://github.com/Arwalk/zig-protobuf) instead unless you absolutely need full conformance.
 
@@ -51,7 +51,7 @@ in particular I did not want to handle:
 
 ## How it Works
 but then I had an idea so dumb that it wraps all the way around to being kinda smart. 
-- A. Use a language that already has protobuf support for the code gen so I can avoid the bootstrapping stuff
+- A. Use a language that already has protobuf support for the code gen so I can avoid the bootstrapping stuff.
 - B. Don't write a runtime in Zig at all, just wrap an existing runtime.  
 
 The code generator is written in Python using mako templates. The runtime that the generated code calls into is just a wrapper around the C [upb](https://github.com/protocolbuffers/protobuf/tree/main/upb) protobuf runtime (hence the name of this project **upb**-zig) 
