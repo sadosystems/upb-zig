@@ -1,4 +1,4 @@
-"""Internal rules for building peglike."""
+"""Internal rules for building upb-zig."""
 
 def make_shell_script(name, contents, out):
     contents = contents.replace("$", "$$")

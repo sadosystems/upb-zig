@@ -8,40 +8,57 @@ from typing import Literal
 
 REQUIREMENT_LEVELS = ("Required", "Recommended")
 
-def normalize_proto_version(version: str) -> Literal["Proto2" , "Proto3"] | str: # Editions_*
+
+def normalize_proto_version(version: str) -> Literal["Proto2", "Proto3"] | str:
+    """Normalize Editions_Proto2/Proto3 to just Proto2/Proto3."""
     if "Proto2" in version:
         return "Proto2"
     if "Proto3" in version:
         return "Proto3"
     return version
-    
+
+
+def get_test_format(test_type: str) -> str:
+    """Map test type to format category."""
+    if "Json" in test_type:
+        return "JSON"
+    if "TextFormat" in test_type:
+        return "Text format"
+    # ProtobufInput or similar = wire format
+    return "Wire format"
+
+
 @dataclass
 class ConformanceTest:
     """Parsed conformance test value."""
-    requirement_level: Literal["Required" , "Recommended"] 
-    proto_version: Literal["Proto2" , "Proto3"] | str # Proto2 / Proto3 / Editions_*
+    requirement_level: Literal["Required", "Recommended"]
+    proto_version: Literal["Proto2", "Proto3"] | str
+    test_format: str  # "Wire format", "JSON", "Text format"
 
     @classmethod
     def from_str(cls, as_str: str) -> "ConformanceTest":
         parts = as_str.split(".")
 
-        assert len(parts) >= 2, "What"
-        
+        assert len(parts) >= 3, f"Expected at least 3 parts in test name: {as_str}"
+
         requirement_level = parts[0]
         assert requirement_level in REQUIREMENT_LEVELS, f"Must be one of {REQUIREMENT_LEVELS}"
 
-        proto_version = parts[1]
-        proto_version = normalize_proto_version(proto_version)
+        proto_version = normalize_proto_version(parts[1])
+        test_type = parts[2]  # e.g., JsonInput, ProtobufInput, TextFormatInput
+        test_format = get_test_format(test_type)
 
         return cls(
             requirement_level=requirement_level,
-            proto_version=proto_version
-            )
+            proto_version=proto_version,
+            test_format=test_format,
+        )
+
 
 @dataclass
 class ConformanceResult:
     """Parsed conformance test results."""
-    failed: list[ConformanceTest] = field(default_factory=list[ConformanceTest])
+    failed: list[ConformanceTest] = field(default_factory=list)
     num_passed: int = 0
     skipped: int = 0
     expected_failures: int = 0
@@ -74,39 +91,37 @@ def parse_conformance_log(log: str) -> ConformanceResult:
 
 def generate_report(result: ConformanceResult, impl_name: str = "upb-zig") -> str:
     """Generate a markdown report from parsed results."""
-    lines = ["# Conformance Test Report", ""]
+    lines = []
 
-    failed_by_category: defaultdict[tuple[str, str], int] = defaultdict(int)
+    # Count failures by (requirement_level, proto_version, test_format)
+    failed_by_category: defaultdict[tuple[str, str, str], int] = defaultdict(int)
     for test in result.failed:
-        failed_by_category[(test.requirement_level, test.proto_version)] += 1
+        failed_by_category[(test.requirement_level, test.proto_version, test.test_format)] += 1
 
     total_run = result.num_passed + result.num_failed
+    overall_pct = f"{100 * result.num_passed / total_run:.1f}%" if total_run > 0 else "N/A"
 
-    def get_pass_indicator(req: str, proto: str) -> str:
-        failed = failed_by_category.get((req, proto), 0)
-        return "PASS" if failed == 0 else f"FAIL ({failed})"
+    def get_status(req: str, proto: str | None, fmt: str) -> str:
+        """Get status for a category. If proto is None, combine Proto2 and Proto3."""
+        if proto is None:
+            failed = (failed_by_category.get((req, "Proto2", fmt), 0) +
+                      failed_by_category.get((req, "Proto3", fmt), 0))
+        else:
+            failed = failed_by_category.get((req, proto, fmt), 0)
+        return f"{failed} failures"
 
-    lines.append(
-        "| Implementation | Proto2 Required | Proto3 Required | Proto2 Recommended | Proto3 Recommended |")
-    lines.append("|----------------|-----------------|-----------------|--------------------|--------------------|")
-    lines.append(
-        f"| {impl_name} "
-        f"| {get_pass_indicator('Required', 'Proto2')} "
-        f"| {get_pass_indicator('Required', 'Proto3')} "
-        f"| {get_pass_indicator('Recommended', 'Proto2')} "
-        f"| {get_pass_indicator('Recommended', 'Proto3')} |"
-    )
-
-    lines.append("")
-    if total_run > 0:
-        lines.append(f"**Overall**: {result.num_passed}/{total_run} ({100 * result.num_passed / total_run:.1f}% passing)")
-    else:
-        lines.append("**Overall**: No tests run")
-
-    if result.skipped > 0:
-        lines.append(f"**Skipped**: {result.skipped}")
-
-    if result.expected_failures > 0:
-        lines.append(f"**Expected failures**: {result.expected_failures}")
+    # Build table in desired format
+    lines.append(f"| Category | {impl_name} | zig-protobuf |")
+    lines.append("|----------|-------------|--------------|")
+    lines.append("| **Required Tests** | | |")
+    lines.append(f"| Wire format (proto2) | {get_status('Required', 'Proto2', 'Wire format')} | N/A |")
+    lines.append(f"| Wire format (proto3) | {get_status('Required', 'Proto3', 'Wire format')} | N/A |")
+    lines.append(f"| JSON (proto2) | {get_status('Required', 'Proto2', 'JSON')} | N/A |")
+    lines.append(f"| JSON (proto3) | {get_status('Required', 'Proto3', 'JSON')} | N/A |")
+    lines.append("| **Recommended Tests** | | |")
+    lines.append(f"| Wire format | {get_status('Recommended', None, 'Wire format')} | N/A |")
+    lines.append(f"| JSON | {get_status('Recommended', None, 'JSON')} | N/A |")
+    lines.append(f"| Text format | {get_status('Recommended', None, 'Text format')} | N/A |")
+    lines.append(f"| **Overall** | {overall_pct} | N/A |")
 
     return "\n".join(lines)

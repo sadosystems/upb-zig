@@ -73,32 +73,25 @@ Since Protobuf implementations have a bootstrapping problem a throwaway implemen
 The current implementations being tested are:
 
 - zig-protobuf: https://github.com/Arwalk/zig-protobuf
-- upb-zig: https://github.com/sadosystems/peglike
+- upb-zig: https://github.com/sadosystems/upb-zig
 
 ### Results
 <!-- BEGIN CONFORMANCE TABLE -->
-| Implementation | Proto2 Required | Proto3 Required | Proto2 Recommended | Proto3 Recommended |
-|----------------|-----------------|-----------------|--------------------|--------------------|
-| upb-zig | FAIL (4) | FAIL (8) | FAIL (6) | FAIL (6) |
-
-**Overall**: 5573/5597 (99.6% passing)
-**Skipped**: 18
+| Category | upb-zig | zig-protobuf |
+|----------|-------------|--------------|
+| **Required Tests** | | |
+| Wire format (proto2) | 0 failures | N/A |
+| Wire format (proto3) | 0 failures | N/A |
+| JSON (proto2) | 4 failures | N/A |
+| JSON (proto3) | 8 failures | N/A |
+| **Recommended Tests** | | |
+| Wire format | 0 failures | N/A |
+| JSON | 12 failures | N/A |
+| Text format | 0 failures | N/A |
+| **Overall** | 99.6% | N/A |
 <!-- END CONFORMANCE TABLE -->
 
-todo I want to update the conformance result gen to look like this: 
-| Category | upb-zig | zig-protobuf |
-|----------|-------------|----------------------|
-| **Required Tests** | | |
-| Wire format (proto2) | —/— | —/— |
-| Wire format (proto3) | —/— | —/— |
-| JSON (proto3) | —/— | —/— |
-| **Recommended Tests** | | |
-| Wire format | —/— | —/— |
-| JSON | —/— | —/— |
-| Text format | —/— | —/— |
-| **Overall** | —% | —% |
-
-Here is a more fine grained test by test breakdown: [todo add link]
+Here is a more fine grained test by test breakdown: [todo add this]
 
 interesting issue https://github.com/Arwalk/zig-protobuf/issues/144
 I want to comment on this directly but I am not sure how.
