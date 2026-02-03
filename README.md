@@ -36,11 +36,11 @@ Why make this when [zig-protobuf](https://github.com/Arwalk/zig-protobuf) exists
 
 I was working on a project in zig that required the use of protobuf. On a different project, in a different language I once reached for a protobuf implementation on github and just assumed it would be conformant, way later in development I tracked down a highly annoying bug that was caused by the fact that the library I was using was not in fact conformant. I vowed to never again use a non-conformant implementation of protobuf.
 
-So when I found [zig-protobuf](https://github.com/Arwalk/zig-protobuf) the first thing I looked for was conformance tests, then to my dismay I found [this issue](https://github.com/Arwalk/zig-protobuf/issues/27). long story short zig-protobuf is not tested against the conformance test suite provided by Google.
+So when I found [zig-protobuf](https://github.com/Arwalk/zig-protobuf) the first thing I looked for was conformance tests, then to my dismay I found [this issue](https://github.com/Arwalk/zig-protobuf/issues/27). Long-story-short zig-protobuf is not tested against the conformance test suite provided by Google.
 
-So I wired them up. [here](https://todo_make_this_a_real_link) is the result.
+So I wired them up. [Here is the result](https://todo_make_this_a_real_link)
 
-I was really depressed when I discovered they are not conformant because honestly I am really starting to hate protobuf and I don't want to write my own implementation. the core may be [simple enough](https://protobuf.dev/programming-guides/encoding/) but tracking down every edge case seemed like a nightmare. 
+I was depressed when I discovered zig-protobuf is not conformant. Honestly I was really starting to hate protobuf and I did not want to write my own implementation. The core may be [simple enough](https://protobuf.dev/programming-guides/encoding/) but tracking down every little edge case is a nightmare.
 
 in particular I did not want to handle:
 - [proto3 vs proto2 vs editions](https://protobuf.dev/editions/overview/)
