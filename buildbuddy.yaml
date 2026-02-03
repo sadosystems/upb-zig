@@ -20,7 +20,7 @@ actions:
     steps:
       - run: bazel test //... --test_tag_filters=doc_checking
 
-  - name: "Build upbzig Plugin"
+  - name: "Build upb_zig Plugin"
     container_image: "ubuntu-22.04"
     triggers:
       push:
@@ -28,4 +28,4 @@ actions:
       pull_request:
         branches: ["*"]
     steps:
-      - run: bazel build //upbzig/plugin:protoc-gen-zig
+      - run: bazel build //upb_zig/plugin:protoc-gen-zig

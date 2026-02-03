@@ -78,6 +78,19 @@ The current implementations being tested are:
 <!-- BEGIN CONFORMANCE TABLE -->
 <!-- END CONFORMANCE TABLE -->
 
+todo I want to update the conformance result gen to look like this: 
+| Category | upb-zig | zig-protobuf |
+|----------|-------------|----------------------|
+| **Required Tests** | | |
+| Wire format (proto2) | —/— | —/— |
+| Wire format (proto3) | —/— | —/— |
+| JSON (proto3) | —/— | —/— |
+| **Recommended Tests** | | |
+| Wire format | —/— | —/— |
+| JSON | —/— | —/— |
+| Text format | —/— | —/— |
+| **Overall** | —% | —% |
+
 Here is a more fine grained test by test breakdown: [todo add link]
 
 interesting issue https://github.com/Arwalk/zig-protobuf/issues/144
