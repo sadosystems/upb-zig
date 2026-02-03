@@ -209,3 +209,71 @@ test "nested message setter then getter" {
 
     try std.testing.expect(request.getJspbEncodingOptions() != null);
 }
+
+// ============================================================================
+// Oneof Tests
+// ============================================================================
+
+test "oneof payload case detection after decode" {
+    // Wire format for ConformanceRequest with protobuf_payload set:
+    //   field 1 (protobuf_payload), wire type 2 (len-delimited): tag = (1 << 3) | 2 = 10
+    //   length = 3
+    //   bytes = "abc"
+    const wire_data = "\x0a\x03abc";
+
+    var arena = try upb_zig.Arena.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const request = try conformance_pb.ConformanceRequest.decode(arena, wire_data);
+
+    try std.testing.expectEqual(
+        conformance_pb.ConformanceRequest.PayloadCase.protobuf_payload,
+        request.payloadCase(),
+    );
+}
+
+test "oneof payload case switches when different field is set" {
+    var arena = try upb_zig.Arena.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var request = try conformance_pb.ConformanceRequest.init(arena);
+
+    // Initially no payload set
+    try std.testing.expectEqual(
+        conformance_pb.ConformanceRequest.PayloadCase.not_set,
+        request.payloadCase(),
+    );
+
+    // Set protobuf_payload
+    request.setProtobufPayload("some binary data");
+    try std.testing.expectEqual(
+        conformance_pb.ConformanceRequest.PayloadCase.protobuf_payload,
+        request.payloadCase(),
+    );
+
+    // Set json_payload - should switch the oneof
+    request.setJsonPayload("{\"key\": \"value\"}");
+    try std.testing.expectEqual(
+        conformance_pb.ConformanceRequest.PayloadCase.json_payload,
+        request.payloadCase(),
+    );
+}
+
+test "oneof response result case" {
+    var arena = try upb_zig.Arena.init(std.testing.allocator);
+    defer arena.deinit();
+
+    var response = try conformance_pb.ConformanceResponse.init(arena);
+
+    try std.testing.expectEqual(
+        conformance_pb.ConformanceResponse.ResultCase.not_set,
+        response.resultCase(),
+    );
+
+    response.setSkipped("not supported");
+    try std.testing.expectEqual(
+        conformance_pb.ConformanceResponse.ResultCase.skipped,
+        response.resultCase(),
+    );
+    try std.testing.expectEqualStrings("not supported", response.getSkipped());
+}

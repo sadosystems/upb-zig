@@ -4,62 +4,16 @@ Code generation logic for upb_zig.
 Uses Mako templates to generate Zig code from protobuf descriptors.
 """
 
-from mako.template import Template
-from google.protobuf.descriptor_pb2 import (
+from mako.template import Template # pyright: ignore[reportMissingTypeStubs]
+from google.protobuf.descriptor_pb2 import ( # pyright: ignore[reportMissingModuleSource]
     FileDescriptorProto,
     DescriptorProto,
     FieldDescriptorProto,
     EnumDescriptorProto,
 )
-from typing import Dict, Set, Optional, List
+from typing import Dict, Optional, List
 
-
-def serialize_to_zig_bytes(data: bytes) -> str:
-    """Convert bytes to a Zig string literal with escape sequences.
-
-    The bytes are embedded as a string literal that can be used as []const u8.
-    """
-    # Build a string literal with hex escapes for all bytes
-    parts = []
-    for byte in data:
-        parts.append(f"\\x{byte:02x}")
-    return '"' + ''.join(parts) + '"'
-
-
-def get_message_full_names(file_desc: FileDescriptorProto) -> List[str]:
-    """Get all fully-qualified message names in a file.
-
-    Returns names like "package.MessageName" or "package.Outer.Nested".
-    """
-    names = []
-    package = file_desc.package
-
-    def collect_messages(msg: DescriptorProto, prefix: str):
-        full_name = f"{prefix}.{msg.name}" if prefix else msg.name
-        names.append(full_name)
-        for nested in msg.nested_type:
-            collect_messages(nested, full_name)
-
-    prefix = package if package else ""
-    for msg in file_desc.message_type:
-        collect_messages(msg, prefix)
-
-    return names
-
-
-def proto_to_module_name(file_desc: FileDescriptorProto) -> str:
-    """Convert a proto file to its Zig module name.
-
-    Uses file path to ensure uniqueness (multiple files can share a package).
-    Example: "google/protobuf/any.proto" -> "google_protobuf_any"
-    Example: "foo/bar/baz.proto" -> "foo_bar_baz"
-    """
-    # Remove .proto extension and replace path separators with underscore
-    name = file_desc.name
-    if name.endswith(".proto"):
-        name = name[:-6]
-    return name.replace("/", "_").replace(".", "_")
-
+# -------------- CONSTANTS --------------
 # Zig reserved keywords that need escaping with @""
 ZIG_KEYWORDS = {
     'addrspace', 'align', 'allowzero', 'and', 'anyframe', 'anytype',
@@ -71,14 +25,6 @@ ZIG_KEYWORDS = {
     'true', 'try', 'type', 'undefined', 'union', 'unreachable', 'usingnamespace',
     'var', 'volatile', 'while',
 }
-
-
-def escape_zig_keyword(name: str) -> str:
-    """Escape a name if it's a Zig keyword."""
-    if name in ZIG_KEYWORDS:
-        return f'@"{name}"'
-    return name
-
 
 # Mapping from protobuf field types to Zig types
 PROTO_TYPE_TO_ZIG = {
@@ -153,55 +99,6 @@ PROTO_TYPE_TO_RUNTIME_FN = {
     FieldDescriptorProto.TYPE_SINT32: "Int32",
     FieldDescriptorProto.TYPE_SINT64: "Int64",
 }
-
-
-def runtime_getter(field: FieldDescriptorProto) -> str:
-    """Get the runtime getter function name for a field type."""
-    fn_name = PROTO_TYPE_TO_RUNTIME_FN.get(field.type)
-    if fn_name:
-        return f"upb_zig.get{fn_name}"
-    return None
-
-
-def runtime_setter(field: FieldDescriptorProto) -> str:
-    """Get the runtime setter function name for a field type."""
-    fn_name = PROTO_TYPE_TO_RUNTIME_FN.get(field.type)
-    if fn_name:
-        return f"upb_zig.set{fn_name}"
-    return None
-
-
-def array_getter_fn(field: FieldDescriptorProto) -> str:
-    """Get the runtime array element getter function name for a field type."""
-    fn_name = PROTO_TYPE_TO_RUNTIME_FN.get(field.type)
-    if fn_name:
-        return f"upb_zig.arrayGet{fn_name}"
-    return None
-
-
-def array_appender_fn(field: FieldDescriptorProto) -> str:
-    """Get the runtime array element appender function name for a field type."""
-    fn_name = PROTO_TYPE_TO_RUNTIME_FN.get(field.type)
-    if fn_name:
-        return f"upb_zig.arrayAppend{fn_name}"
-    return None
-
-
-def default_value(field: FieldDescriptorProto) -> str:
-    """Get the default value for a field type."""
-    if field.type == FieldDescriptorProto.TYPE_STRING:
-        return '""'
-    elif field.type == FieldDescriptorProto.TYPE_BYTES:
-        return '""'
-    elif field.type == FieldDescriptorProto.TYPE_BOOL:
-        return "false"
-    elif field.type == FieldDescriptorProto.TYPE_DOUBLE:
-        return "0.0"
-    elif field.type == FieldDescriptorProto.TYPE_FLOAT:
-        return "0.0"
-    else:
-        return "0"
-
 
 # Template for a message
 MESSAGE_TEMPLATE = Template(r'''/// ${message.name} message from ${file_name}
@@ -417,6 +314,103 @@ pub const ${message.name} = struct {
 };
 ''')
 
+def serialize_to_zig_bytes(data: bytes) -> str:
+    """Convert bytes to a Zig string literal with escape sequences.
+
+    The bytes are embedded as a string literal that can be used as []const u8.
+    """
+    # Build a string literal with hex escapes for all bytes
+    parts: list[str] = []
+    for byte in data:
+        parts.append(f"\\x{byte:02x}")
+    return '"' + ''.join(parts) + '"'
+
+
+def get_message_full_names(file_desc: FileDescriptorProto) -> List[str]:
+    """Get all fully-qualified message names in a file.
+
+    Returns names like "package.MessageName" or "package.Outer.Nested".
+    """
+    names: list[str] = []
+    package = file_desc.package
+
+    def collect_messages(msg: DescriptorProto, prefix: str):
+        full_name = f"{prefix}.{msg.name}" if prefix else msg.name
+        names.append(full_name)
+        for nested in msg.nested_type:
+            collect_messages(nested, full_name)
+
+    prefix = package if package else ""
+    for msg in file_desc.message_type:
+        collect_messages(msg, prefix)
+
+    return names
+
+
+def proto_to_module_name(file_desc: FileDescriptorProto) -> str:
+    """Convert a proto file to its Zig module name.
+
+    Uses file path to ensure uniqueness (multiple files can share a package).
+    Example: "google/protobuf/any.proto" -> "google_protobuf_any"
+    Example: "foo/bar/baz.proto" -> "foo_bar_baz"
+    """
+    # Remove .proto extension and replace path separators with underscore
+    name = file_desc.name
+    if name.endswith(".proto"):
+        name = name[:-6]
+    return name.replace("/", "_").replace(".", "_")
+
+
+def escape_zig_keyword(name: str) -> str:
+    """Escape a name if it's a Zig keyword."""
+    if name in ZIG_KEYWORDS:
+        return f'@"{name}"'
+    return name
+
+def runtime_getter(field: FieldDescriptorProto) -> str:
+    """Get the runtime getter function name for a field type."""
+    fn_name = PROTO_TYPE_TO_RUNTIME_FN.get(field.type)
+    if fn_name:
+        return f"upb_zig.get{fn_name}"
+    return None # should these raise
+
+
+def runtime_setter(field: FieldDescriptorProto) -> str:
+    """Get the runtime setter function name for a field type."""
+    fn_name = PROTO_TYPE_TO_RUNTIME_FN.get(field.type)
+    if fn_name:
+        return f"upb_zig.set{fn_name}"
+    return None
+
+
+def array_getter_fn(field: FieldDescriptorProto) -> str:
+    """Get the runtime array element getter function name for a field type."""
+    fn_name = PROTO_TYPE_TO_RUNTIME_FN.get(field.type)
+    if fn_name:
+        return f"upb_zig.arrayGet{fn_name}"
+    return None
+
+
+def array_appender_fn(field: FieldDescriptorProto) -> str:
+    """Get the runtime array element appender function name for a field type."""
+    fn_name = PROTO_TYPE_TO_RUNTIME_FN.get(field.type)
+    if fn_name:
+        return f"upb_zig.arrayAppend{fn_name}"
+    return None
+
+
+def default_value(field: FieldDescriptorProto) -> str:
+    """Get the default value for a field type."""
+    match field.type:
+        case FieldDescriptorProto.TYPE_STRING | FieldDescriptorProto.TYPE_BYTES:
+            return '""'
+        case FieldDescriptorProto.TYPE_BOOL:
+            return "false"
+        case FieldDescriptorProto.TYPE_DOUBLE | FieldDescriptorProto.TYPE_FLOAT:
+            return "0.0"
+        case _:
+            return "0"
+
 
 def snake_to_camel(name: str) -> str:
     """Convert snake_case to camelCase."""
@@ -502,7 +496,7 @@ def generate_enum(enum: EnumDescriptorProto, file_name: str) -> str:
     )
 
 
-def generate_message(message: DescriptorProto, file_name: str, resolve_type=None, parent_fqn: str = "") -> str:
+def generate_message(message: DescriptorProto, file_name: str, resolve_type: None = None, parent_fqn: str = "") -> str:
     """Generate Zig code for a message."""
     # Build the fully qualified name for this message
     if parent_fqn:
