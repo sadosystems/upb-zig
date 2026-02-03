@@ -1,0 +1,3 @@
+# rules zig itself (for building zig)
+zig = use_extension("@rules_zig//zig:extensions.bzl", "zig")
+zig.toolchain(zig_version = "0.15.2")

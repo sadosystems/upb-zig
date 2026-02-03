@@ -1,0 +1,12 @@
+bazel_dep(name = "rules_zig", version = "0.12.3")
+bazel_dep(name = "rules_proto", version = "7.1.0")
+bazel_dep(name = "rules_python", version = "1.6.3")
+bazel_dep(name = "protobuf", version = "33.4", repo_name = "com_google_protobuf")
+
+# Override protobuf to use main branch which has the rules_ruby load removed from conformance/BUILD
+# (fix landed in PR #24487, not yet in any release)
+git_override(
+    module_name = "protobuf",
+    remote = "https://github.com/protocolbuffers/protobuf.git",
+    commit = "272f68a6bbcc7ac8e34736e85b5a0e14fe135e20",
+)

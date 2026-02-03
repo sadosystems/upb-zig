@@ -1,0 +1,5 @@
+This directory is exclusively for Bazel build infrastructure and tooling. It contains third-party dependency definitions, platform configurations, custom build rules, and deployment tools. Everything needed to build and package the project, but not the application code itself. If you're modifying how the project builds or adding external dependencies, it should probably go in here. If you are writing a BUILD file that specifies how to build code that isn't from a third party dep this is probably the wrong place. if you are writing a rule that is not generally useful this is probably the wrong place.
+ 
+tools written here must be bazel build tools (genrules rules macros sh scripts) they must not be general monorepo tools like documentation compilation, linting, code formatting, or CI stuff.
+
+.MODULE.bazel
