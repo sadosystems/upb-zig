@@ -87,7 +87,6 @@ The current implementations being tested are:
 | **Recommended** | 99.1% | N/A |
 | Wire format | 0 failures | N/A |
 | JSON | 12 failures | N/A |
-| Text format | 0 failures | N/A |
 | **Overall** | 99.6% | N/A |
 <!-- END CONFORMANCE TABLE -->
 

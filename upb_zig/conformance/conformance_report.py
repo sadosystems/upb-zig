@@ -133,7 +133,6 @@ def generate_report(result: ConformanceResult, impl_name: str = "upb-zig") -> st
     lines.append(f"| **Recommended** | {rec_pct} | N/A |")
     lines.append(f"| Wire format | {get_status('Recommended', None, 'Wire format')} | N/A |")
     lines.append(f"| JSON | {get_status('Recommended', None, 'JSON')} | N/A |")
-    lines.append(f"| Text format | {get_status('Recommended', None, 'Text format')} | N/A |")
     lines.append(f"| **Overall** | {overall_pct} | N/A |")
 
     return "\n".join(lines)

@@ -10,8 +10,8 @@ Usage:
 """
 
 import sys
-from google.protobuf.compiler import plugin_pb2 as plugin
-from google.protobuf.descriptor_pb2 import FileDescriptorProto
+from google.protobuf.compiler import plugin_pb2 as plugin # pyright: ignore[reportMissingModuleSource]
+from google.protobuf.descriptor_pb2 import FileDescriptorProto # pyright: ignore[reportMissingModuleSource]
 
 from codegen import generate_file
 
