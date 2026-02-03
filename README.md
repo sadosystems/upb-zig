@@ -49,9 +49,10 @@ in particular I did not want to handle:
 - bootstrapping (protoc plugins are authored as executables that take serialized Descriptors, which are serialized using... protobuf!)
 - many edge cases I don't even know about
 
+## How it works
 but then I had an idea so dumb that it wraps all the way around to being kinda smart. 
 - A. Use a language that already has protobuf support for the code gen so I can avoid the bootstrapping stuff
-- B. don't write a runtime in Zig at all, just wrap an existing runtime.  
+- B. Don't write a runtime in Zig at all, just wrap an existing runtime.  
 
 The code generator is written in Python using mako templates. The runtime that the generated code calls into is just a wrapper around the C [upb](https://github.com/protocolbuffers/protobuf/tree/main/upb) protobuf runtime (hence the name of this project **upb**-zig) 
 
