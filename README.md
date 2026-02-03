@@ -77,6 +77,12 @@ The current implementations being tested are:
 
 ### Results
 <!-- BEGIN CONFORMANCE TABLE -->
+| Implementation | Proto2 Required | Proto3 Required | Proto2 Recommended | Proto3 Recommended |
+|----------------|-----------------|-----------------|--------------------|--------------------|
+| upb-zig | FAIL (4) | FAIL (8) | FAIL (6) | FAIL (6) |
+
+**Overall**: 5573/5597 (99.6% passing)
+**Skipped**: 18
 <!-- END CONFORMANCE TABLE -->
 
 todo I want to update the conformance result gen to look like this: 
