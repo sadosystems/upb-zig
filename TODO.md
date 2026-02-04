@@ -15,3 +15,5 @@ release protoc-gen-zig on PyPI [DONE]
 
 WAS LAST DOING: 
 trying to get the wheel for protoc gen zig to work with a console script done
+
+the zig-protobuf conformance test is totally fucked right now. clean that up completely.
