@@ -175,7 +175,7 @@
   "moduleExtensions": {
     "//bazel/third_party:zig_protobuf_ext.bzl%zig_protobuf": {
       "general": {
-        "bzlTransitiveDigest": "iPyk773MLschxuPeu2M1hYU2uZyMXfsPsLHCo6TQDwc=",
+        "bzlTransitiveDigest": "LKvZzPp1XsOS/MOp+lSj0Z39IkHjRe/vul8ONha6Kuw=",
         "usagesDigest": "dUSkv5WKXRwJkwJJpZ619jjczuEgSxHyVmgyLXJWEDU=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
@@ -196,6 +196,26 @@
             "",
             "bazel_tools",
             "bazel_tools"
+          ],
+          [
+            "",
+            "com_google_protobuf",
+            "protobuf+"
+          ],
+          [
+            "bazel_features+",
+            "bazel_features_globals",
+            "bazel_features++version_extension+bazel_features_globals"
+          ],
+          [
+            "bazel_features+",
+            "bazel_features_version",
+            "bazel_features++version_extension+bazel_features_version"
+          ],
+          [
+            "protobuf+",
+            "proto_bazel_features",
+            "bazel_features+"
           ]
         ]
       }
