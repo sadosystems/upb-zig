@@ -170,6 +170,7 @@ def generate_report(
     # Build table
     lines.append(f"| Category | {impl_name} | zig-protobuf |")
     lines.append("|----------|-------------|--------------|")
+    lines.append(f"| **Overall** | {overall_badge} | {zp_col['overall']} |")
     lines.append(f"| **Required** | {req_badge} | {zp_col['req']} |")
     lines.append(f"| Wire format (proto2) | {upb_status('Required', 'Proto2', 'Wire format')} | {zp_col['req_wire_p2']} |")
     lines.append(f"| Wire format (proto3) | {upb_status('Required', 'Proto3', 'Wire format')} | {zp_col['req_wire_p3']} |")
@@ -178,7 +179,6 @@ def generate_report(
     lines.append(f"| **Recommended** | {rec_badge} | {zp_col['rec']} |")
     lines.append(f"| Wire format | {upb_status('Recommended', None, 'Wire format')} | {zp_col['rec_wire']} |")
     lines.append(f"| JSON | {upb_status('Recommended', None, 'JSON')} | {zp_col['rec_json']} |")
-    lines.append(f"| **Overall** | {overall_badge} | {zp_col['overall']} |")
 
     return "\n".join(lines)
 
