@@ -1,20 +1,21 @@
-"""Module extension to fetch zig-protobuf source."""
+"""Module extension and rules for zig-protobuf."""
+
 load("@com_google_protobuf//bazel/common:proto_info.bzl", "ProtoInfo")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@rules_zig//zig/private/providers:zig_module_info.bzl", "ZigModuleInfo")
 
 def _zig_protobuf_impl(ctx):
     http_archive(
         name = "zig_protobuf",
-        url = "https://github.com/Arwalk/zig-protobuf/archive/refs/tags/v3.0.1.tar.gz",
-        sha256 = "f7ba0c414978813805e6a9f5897fa4a4cb00e775143c96c4625ca4d91ebac77d",
-        strip_prefix = "zig-protobuf-3.0.1",
+        url = "https://github.com/Arwalk/zig-protobuf/archive/2828be045c5f3e55c6f3f239c2ec40bc480a26ca.tar.gz",
+        sha256 = "583b7f27775278f64bcb08e5296f088c259eeb8cec93d6792967f13140dac3bf",
+        strip_prefix = "zig-protobuf-2828be045c5f3e55c6f3f239c2ec40bc480a26ca",
         build_file = Label("//bazel/third_party:zig_protobuf.BUILD"),
     )
 
 zig_protobuf = module_extension(
     implementation = _zig_protobuf_impl,
 )
-
 
 def _zig_protobuf_compile_impl(ctx):
     proto_infos = [dep[ProtoInfo] for dep in ctx.attr.deps]
@@ -33,31 +34,113 @@ def _zig_protobuf_compile_impl(ctx):
 
     inputs = depset(transitive = all_sources)
 
-    # Use a tree artifact (directory) for output since zig-protobuf
-    # names output files by proto package name, not input filename.
-    out_dir = ctx.actions.declare_directory(ctx.attr.name + "_out")
+    # Declare individual output files from the outs dict.
+    # Keys are file paths relative to the protoc output dir.
+    # Values are the re-export names used in the wrapper module.
+    out_files = []
+    for out_path in ctx.attr.outs.keys():
+        f = ctx.actions.declare_file(ctx.attr.name + "/" + out_path)
+        out_files.append(f)
 
-    args = ctx.actions.args()
-    args.add("--plugin=protoc-gen-zig=" + ctx.executable.plugin.path)
-    args.add("--zig_out=" + out_dir.path)
+    # The protoc output directory is the common parent of all declared files.
+    out_dir = out_files[0].dirname
 
+    # Declare the wrapper module file that re-exports all generated modules.
+    wrapper = ctx.actions.declare_file(ctx.attr.name + ".zig")
+
+    # Build protoc command and run with post-processing to fix
+    # duplicate enum values (proto3 allow_alias generates duplicates
+    # that Zig's enum type does not allow).
+    protoc_args = [
+        ctx.executable.protoc.path,
+        "--plugin=protoc-gen-zig=" + ctx.executable.plugin.path,
+        "--zig_out=" + out_dir,
+    ]
     for path in proto_paths:
-        args.add("-I" + path)
-
+        protoc_args.append("-I" + path)
     for src in direct_sources:
-        args.add(src.path)
+        protoc_args.append(src.path)
 
-    ctx.actions.run(
-        executable = ctx.executable.protoc,
-        arguments = [args],
+    # Post-processing fixes for zig-protobuf code generation issues:
+    # 1. Remove duplicate enum tag values (proto3 allow_alias)
+    # 2. Fix indirect recursive message cycles (should use ?*T not ?T)
+    fix_script = r"""
+for f in {out_files}; do
+    awk '
+    /enum\(i32\)/ {{ in_enum=1; delete seen }}
+    in_enum && /^[[:space:]]*_,/ {{ in_enum=0 }}
+    in_enum {{ if (match($0, /= ([0-9-]+),/, a)) {{ if (a[1] in seen) next; seen[a[1]]=1 }} }}
+    {{ print }}
+    ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+    # Fix indirect recursive submessage fields by making them pointers.
+    # zig-protobuf only handles direct self-references but misses indirect cycles:
+    #   TestAllTypesProto3 -> NestedMessage -> TestAllTypesProto3
+    #   Value -> Struct -> FieldsEntry -> Value
+    #   Value -> ListValue -> Value
+    sed -i \
+        -e 's/corecursive: ?TestAllTypesProto3 = null/corecursive: ?*TestAllTypesProto3 = null/g' \
+        -e 's/struct_value: Struct,/struct_value: *Struct,/' \
+        -e 's/list_value: ListValue,/list_value: *ListValue,/' \
+        -e 's/value: ?Value = null/value: ?*Value = null/' \
+        -e 's/values: std.ArrayListUnmanaged(Value)/values: std.ArrayListUnmanaged(*Value)/' \
+        "$f"
+done
+""".format(out_files = " ".join([f.path for f in out_files]))
+
+    ctx.actions.run_shell(
+        command = " ".join(protoc_args) + "\n" + fix_script,
         inputs = inputs,
-        outputs = [out_dir],
-        tools = [ctx.executable.plugin],
+        outputs = out_files,
+        tools = [ctx.executable.protoc, ctx.executable.plugin],
         mnemonic = "ZigProtobufCompile",
-        progress_message = "Generating zig-protobuf bindings",
+        progress_message = "Generating zig-protobuf bindings for %s" % ctx.label,
     )
 
-    return [DefaultInfo(files = depset([out_dir]))]
+    # Generate the wrapper .zig file that re-exports all generated modules.
+    wrapper_lines = []
+    for out_path, export_name in ctx.attr.outs.items():
+        wrapper_lines.append(
+            'pub const {export} = @import("{dir}/{path}");'.format(
+                export = export_name,
+                dir = ctx.attr.name,
+                path = out_path,
+            ),
+        )
+    ctx.actions.write(output = wrapper, content = "\n".join(wrapper_lines) + "\n")
+
+    # Build ZigModuleInfo so zig_binary can depend on this.
+    runtime = ctx.attr.runtime[ZigModuleInfo]
+
+    # The wrapper module depends on the zig-protobuf runtime ("protobuf").
+    module_context = struct(
+        canonical_name = ctx.attr.name,
+        name = ctx.attr.name,
+        main = wrapper.path,
+        dependency_mappings = (
+            struct(canonical_name = runtime.canonical_name, name = "protobuf"),
+        ),
+        zigopts = (),
+    )
+
+    all_files = out_files + [wrapper]
+
+    return [
+        DefaultInfo(files = depset(all_files)),
+        ZigModuleInfo(
+            canonical_name = ctx.attr.name,
+            name = ctx.attr.name,
+            module_context = module_context,
+            cc_info = runtime.cc_info,
+            transitive_module_contexts = depset(
+                direct = [runtime.module_context],
+                transitive = [runtime.transitive_module_contexts],
+            ),
+            transitive_inputs = depset(
+                direct = all_files,
+                transitive = [runtime.transitive_inputs],
+            ),
+        ),
+    ]
 
 zig_protobuf_compile = rule(
     implementation = _zig_protobuf_compile_impl,
@@ -65,6 +148,10 @@ zig_protobuf_compile = rule(
         "deps": attr.label_list(
             doc = "proto_library targets to generate zig-protobuf bindings for.",
             providers = [ProtoInfo],
+        ),
+        "outs": attr.string_dict(
+            doc = "Map of output file paths (relative to protoc output dir) to re-export names in the wrapper module.",
+            mandatory = True,
         ),
         "protoc": attr.label(
             doc = "The protoc compiler.",
@@ -77,6 +164,11 @@ zig_protobuf_compile = rule(
             default = "@zig_protobuf//:protoc-gen-zig",
             executable = True,
             cfg = "exec",
+        ),
+        "runtime": attr.label(
+            doc = "The zig-protobuf runtime library.",
+            default = "@zig_protobuf//:protobuf",
+            providers = [ZigModuleInfo],
         ),
     },
 )

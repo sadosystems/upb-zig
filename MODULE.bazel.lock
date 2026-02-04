@@ -175,7 +175,7 @@
   "moduleExtensions": {
     "//bazel/third_party:zig_protobuf_ext.bzl%zig_protobuf": {
       "general": {
-        "bzlTransitiveDigest": "LKvZzPp1XsOS/MOp+lSj0Z39IkHjRe/vul8ONha6Kuw=",
+        "bzlTransitiveDigest": "aPqAWmNq+0g/TGK/7KCm+D5WJdQsJcmqOxJEBwPi8XE=",
         "usagesDigest": "dUSkv5WKXRwJkwJJpZ619jjczuEgSxHyVmgyLXJWEDU=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
@@ -184,9 +184,9 @@
           "zig_protobuf": {
             "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
             "attributes": {
-              "url": "https://github.com/Arwalk/zig-protobuf/archive/refs/tags/v3.0.1.tar.gz",
-              "sha256": "f7ba0c414978813805e6a9f5897fa4a4cb00e775143c96c4625ca4d91ebac77d",
-              "strip_prefix": "zig-protobuf-3.0.1",
+              "url": "https://github.com/Arwalk/zig-protobuf/archive/2828be045c5f3e55c6f3f239c2ec40bc480a26ca.tar.gz",
+              "sha256": "583b7f27775278f64bcb08e5296f088c259eeb8cec93d6792967f13140dac3bf",
+              "strip_prefix": "zig-protobuf-2828be045c5f3e55c6f3f239c2ec40bc480a26ca",
               "build_file": "@@//bazel/third_party:zig_protobuf.BUILD"
             }
           }
@@ -203,6 +203,11 @@
             "protobuf+"
           ],
           [
+            "",
+            "rules_zig",
+            "rules_zig+"
+          ],
+          [
             "bazel_features+",
             "bazel_features_globals",
             "bazel_features++version_extension+bazel_features_globals"
@@ -216,6 +221,31 @@
             "protobuf+",
             "proto_bazel_features",
             "bazel_features+"
+          ],
+          [
+            "rules_cc+",
+            "bazel_tools",
+            "bazel_tools"
+          ],
+          [
+            "rules_cc+",
+            "cc_compatibility_proxy",
+            "rules_cc++compatibility_proxy+cc_compatibility_proxy"
+          ],
+          [
+            "rules_cc+",
+            "rules_cc",
+            "rules_cc+"
+          ],
+          [
+            "rules_cc++compatibility_proxy+cc_compatibility_proxy",
+            "rules_cc",
+            "rules_cc+"
+          ],
+          [
+            "rules_zig+",
+            "rules_cc",
+            "rules_cc+"
           ]
         ]
       }

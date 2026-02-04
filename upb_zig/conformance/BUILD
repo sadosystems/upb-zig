@@ -102,6 +102,26 @@ sh_test(
     tags = ["should_fail"],
 )
 
+sh_test(
+    name = "zig_protobuf_conformance_test",
+    srcs = ["test_conformance_upb_zig_dynamic_minitable.sh"],
+    args = [
+        "$(location @com_google_protobuf//conformance:conformance_test_runner)",
+        "$(location :expected_failures.txt)",
+        "$(location :conformance_zig)",
+    ],
+    data = [
+        "@com_google_protobuf//conformance:conformance_test_runner",
+        ":expected_failures.txt",
+        "//upb_zig/conformance/protobuf-zig:protobuf_zig_testee",
+    ],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+    tags = ["should_fail"],
+)
+
 ##################################################################################
 #                        Generate Conformance Report                             #
 ##################################################################################

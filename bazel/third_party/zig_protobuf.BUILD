@@ -33,4 +33,9 @@ zig_protobuf_compile(
         "@com_google_protobuf//conformance:conformance_proto",
         "@com_google_protobuf//conformance/test_protos:test_messages_proto3_proto",
     ],
+    outs = {
+        "conformance.pb.zig": "conformance",
+        "protobuf_test_messages/proto3.pb.zig": "proto3",
+        "google/protobuf.pb.zig": "google_protobuf",
+    },
 )
