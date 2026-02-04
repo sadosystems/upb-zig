@@ -175,7 +175,7 @@
   "moduleExtensions": {
     "//bazel/third_party:zig_protobuf_ext.bzl%zig_protobuf": {
       "general": {
-        "bzlTransitiveDigest": "aPqAWmNq+0g/TGK/7KCm+D5WJdQsJcmqOxJEBwPi8XE=",
+        "bzlTransitiveDigest": "O0eWDI8m34KsePi73dv6sABo8DwakqciXT+mWo+4VKg=",
         "usagesDigest": "dUSkv5WKXRwJkwJJpZ619jjczuEgSxHyVmgyLXJWEDU=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},

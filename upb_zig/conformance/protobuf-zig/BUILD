@@ -1,5 +1,9 @@
 load("@rules_zig//zig:defs.bzl", "zig_library", "zig_binary", "zig_test")
 
+exports_files(["expected_failures.txt"])
+
+package(default_visibility = ["//upb_zig/conformance:__pkg__"])
+
 # zig_protobuf Conformance testee binary - implements the conformance testing protocol
 # Reads ConformanceRequest from stdin, writes ConformanceResponse to stdout
 # Uses generated Zig bindings to decode/encode test messages

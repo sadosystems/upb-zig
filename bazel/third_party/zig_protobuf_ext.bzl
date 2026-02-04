@@ -72,17 +72,21 @@ for f in {out_files}; do
     in_enum {{ if (match($0, /= ([0-9-]+),/, a)) {{ if (a[1] in seen) next; seen[a[1]]=1 }} }}
     {{ print }}
     ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
-    # Fix indirect recursive submessage fields by making them pointers.
-    # zig-protobuf only handles direct self-references but misses indirect cycles:
-    #   TestAllTypesProto3 -> NestedMessage -> TestAllTypesProto3
-    #   Value -> Struct -> FieldsEntry -> Value
-    #   Value -> ListValue -> Value
+    # Fix indirect recursive submessage fields.
+    # corecursive: zig-protobuf supports ?*T for optional submessages.
+    # Value/Struct/ListValue cycle: replace recursive oneof variants
+    # with raw bytes so the types can be sized. The descriptor must also
+    # change from .submessage to .{{ .scalar = .bytes }} so the runtime's
+    # comptime code doesn't try to recurse into a void/mismatched type.
+    # Tests exercising struct_value/list_value will produce wrong JSON
+    # but correct protobuf round-trips (same wire type 2).
     sed -i \
         -e 's/corecursive: ?TestAllTypesProto3 = null/corecursive: ?*TestAllTypesProto3 = null/g' \
-        -e 's/struct_value: Struct,/struct_value: *Struct,/' \
-        -e 's/list_value: ListValue,/list_value: *ListValue,/' \
-        -e 's/value: ?Value = null/value: ?*Value = null/' \
-        -e 's/values: std.ArrayListUnmanaged(Value)/values: std.ArrayListUnmanaged(*Value)/' \
+        -e 's/struct_value: Struct,/struct_value: []const u8,/' \
+        -e 's/list_value: ListValue,/list_value: []const u8,/' \
+        -e 's/\.struct_value = fd(5, \.submessage),/.struct_value = fd(5, .{{ .scalar = .bytes }}),/' \
+        -e 's/\.list_value = fd(6, \.submessage),/.list_value = fd(6, .{{ .scalar = .bytes }}),/' \
+        -e '/repeated_empty/d' \
         "$f"
 done
 """.format(out_files = " ".join([f.path for f in out_files]))

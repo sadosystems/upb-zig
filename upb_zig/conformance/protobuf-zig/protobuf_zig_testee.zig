@@ -177,14 +177,17 @@ fn serveConformanceRequest(allocator: std.mem.Allocator) !bool {
 }
 
 fn writeResponse(fd: std.posix.fd_t, allocator: std.mem.Allocator, response: ConformanceResponse) !void {
-    const response_bytes = encodeToBytes(allocator, response) catch {
+    var w: std.Io.Writer.Allocating = .init(allocator);
+    defer w.deinit();
+
+    response.encode(&w.writer, allocator) catch {
         // Last resort: empty response
         var out_len_buf: [4]u8 = undefined;
         std.mem.writeInt(u32, &out_len_buf, 0, .little);
         try writeFully(fd, &out_len_buf);
         return;
     };
-    defer allocator.free(response_bytes);
+    const response_bytes = w.written();
 
     var out_len_buf: [4]u8 = undefined;
     std.mem.writeInt(u32, &out_len_buf, @intCast(response_bytes.len), .little);

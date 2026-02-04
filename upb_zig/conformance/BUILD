@@ -102,24 +102,29 @@ sh_test(
     tags = ["should_fail"],
 )
 
+make_shell_script(
+    name = "gen_test_conformance_zig_protobuf",
+    out = "test_conformance_zig_protobuf.sh",
+    contents = "$1 --failure_list $2 $3",
+)
+
 sh_test(
     name = "zig_protobuf_conformance_test",
-    srcs = ["test_conformance_upb_zig_dynamic_minitable.sh"],
+    srcs = ["test_conformance_zig_protobuf.sh"],
     args = [
         "$(location @com_google_protobuf//conformance:conformance_test_runner)",
-        "$(location :expected_failures.txt)",
-        "$(location :conformance_zig)",
+        "$(location //upb_zig/conformance/protobuf-zig:expected_failures.txt)",
+        "$(location //upb_zig/conformance/protobuf-zig:protobuf_zig_testee)",
     ],
     data = [
         "@com_google_protobuf//conformance:conformance_test_runner",
-        ":expected_failures.txt",
+        "//upb_zig/conformance/protobuf-zig:expected_failures.txt",
         "//upb_zig/conformance/protobuf-zig:protobuf_zig_testee",
     ],
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
-    tags = ["should_fail"],
 )
 
 ##################################################################################
