@@ -1,1 +1,1 @@
-exports_files(["requirements.txt"])
+exports_files(["requirements.txt", "dev_requirements.txt"])

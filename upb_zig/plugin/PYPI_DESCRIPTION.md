@@ -24,6 +24,6 @@ protoc --plugin=protoc-gen-zig --zig_out=./gen your_file.proto
 ### How it Works
 
 The code generator is written in Python using Mako templates. It reads protoc's
-CodeGeneratorRequest and outputs Zig source files that wrap the [upb](https://github.com/protocolbuffers/protobuf/tree/main/upb) C runtime. The actual encode/decode logic lives in upb, which is fully conformant [*](https://github.com/protocolbuffers/protobuf/blob/main/upb/conformance/conformance_upb_failures.txt.) The generated Zig code is a thin typed facade over that runtime.
+CodeGeneratorRequest and outputs Zig source files that wrap the [upb](https://github.com/protocolbuffers/protobuf/tree/main/upb) C runtime. The actual encode/decode logic lives in upb, which is fully conformant [*](https://github.com/protocolbuffers/protobuf/blob/main/upb/conformance/conformance_upb_failures.txt) The generated Zig code is a thin typed facade over that runtime.
 
 [Full runtime library and Bazel integration](https://github.com/sadosystems/upb-zig). 

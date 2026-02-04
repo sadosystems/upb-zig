@@ -1,0 +1,2 @@
+# Python dependencies for development tools in this repo
+anybadge==1.16.0
