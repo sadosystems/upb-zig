@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
   <rect width="120" height="20" rx="3" fill="#555"/>
-  <rect width="70.23758099352051" height="20" rx="3" fill="#c78a37"/>
+  <rect width="36.10658771280533" height="20" rx="3" fill="#be6437"/>
   <rect width="120" height="20" rx="3" fill="url(#g)"/>
   <defs>
     <linearGradient id="g" x2="0" y2="100%">
@@ -10,7 +10,7 @@
     </linearGradient>
   </defs>
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
-    <text x="60.0" y="15" fill="#010101" fill-opacity=".3">58.5%</text>
-    <text x="60.0" y="14">58.5%</text>
+    <text x="60.0" y="15" fill="#010101" fill-opacity=".3">30.1%</text>
+    <text x="60.0" y="14">30.1%</text>
   </g>
 </svg>

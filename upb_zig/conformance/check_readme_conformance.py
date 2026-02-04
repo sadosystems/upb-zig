@@ -4,32 +4,10 @@
 import sys
 from pathlib import Path
 
-from conformance_report import parse_conformance_log, generate_report
-
-
-START_MARKER = "<!-- BEGIN CONFORMANCE TABLE -->"
-END_MARKER = "<!-- END CONFORMANCE TABLE -->"
-
-
-def extract_table_from_report(report: str) -> str:
-    """Extract just the table portion from the full report."""
-    lines = report.split("\n")
-    start_idx = next((i for i, line in enumerate(lines) if line.startswith("|")), None)
-    if start_idx is None:
-        return ""
-    table_lines = lines[start_idx:]
-    while table_lines and table_lines[-1] == "":
-        table_lines.pop()
-    return "\n".join(table_lines)
-
-
-def extract_table_from_readme(readme_content: str) -> str:
-    """Extract content between conformance table markers."""
-    start_idx = readme_content.find(START_MARKER)
-    end_idx = readme_content.find(END_MARKER)
-    if start_idx == -1 or end_idx == -1:
-        return ""
-    return readme_content[start_idx + len(START_MARKER):end_idx].strip()
+from conformance_report import (
+    parse_conformance_log, generate_report,
+    extract_table_from_report, extract_table_from_readme,
+)
 
 
 def main():
