@@ -95,50 +95,82 @@ TOTAL_REQUIRED = 4267
 TOTAL_RECOMMENDED = 1300
 
 
-def generate_report(result: ConformanceResult, impl_name: str = "upb-zig") -> str:
+def _count_failures(result: ConformanceResult):
+    """Count failures by category and requirement level."""
+    by_category: defaultdict[tuple[str, str, str], int] = defaultdict(int)
+    by_req: defaultdict[str, int] = defaultdict(int)
+    for test in result.failed:
+        by_category[(test.requirement_level, test.proto_version, test.test_format)] += 1
+        by_req[test.requirement_level] += 1
+    return by_category, by_req
+
+
+def _get_status(failed_by_category, req: str, proto: str | None, fmt: str) -> str:
+    """Get failure count string for a category. If proto is None, combine Proto2 and Proto3."""
+    if proto is None:
+        failed = (failed_by_category.get((req, "Proto2", fmt), 0) +
+                  failed_by_category.get((req, "Proto3", fmt), 0))
+    else:
+        failed = failed_by_category.get((req, proto, fmt), 0)
+    return f"{failed} failures"
+
+
+def generate_report(
+    result: ConformanceResult,
+    impl_name: str = "upb-zig",
+    zig_protobuf_result: ConformanceResult | None = None,
+) -> str:
     """Generate a markdown report from parsed results."""
     lines = []
 
-    # Count failures by (requirement_level, proto_version, test_format)
-    failed_by_category: defaultdict[tuple[str, str, str], int] = defaultdict(int)
-    failed_by_req: defaultdict[str, int] = defaultdict(int)
-    for test in result.failed:
-        failed_by_category[(test.requirement_level, test.proto_version, test.test_format)] += 1
-        failed_by_req[test.requirement_level] += 1
+    upb_by_cat, upb_by_req = _count_failures(result)
 
-    total_run = result.num_passed + result.num_failed
-    overall_pct = f"{100 * result.num_passed / total_run:.1f}%" if total_run > 0 else "N/A"
-
-    req_failures = failed_by_req.get("Required", 0)
-    rec_failures = failed_by_req.get("Recommended", 0)
-    req_pct = f"{100 * (TOTAL_REQUIRED - req_failures) / TOTAL_REQUIRED:.1f}%"
-    rec_pct = f"{100 * (TOTAL_RECOMMENDED - rec_failures) / TOTAL_RECOMMENDED:.1f}%"
-
-    def get_status(req: str, proto: str | None, fmt: str) -> str:
-        """Get status for a category. If proto is None, combine Proto2 and Proto3."""
-        if proto is None:
-            failed = (failed_by_category.get((req, "Proto2", fmt), 0) +
-                      failed_by_category.get((req, "Proto3", fmt), 0))
-        else:
-            failed = failed_by_category.get((req, proto, fmt), 0)
-        return f"{failed} failures"
-
-    # Build table in desired format
-    lines.append(f"| Category | {impl_name} | zig-protobuf |")
-    lines.append("|----------|-------------|--------------|")
-    badge_base = "https://raw.githubusercontent.com/sadosystems/upb-zig/master/.github/badges"
     req_badge = "![required](.github/badges/required.svg)"
     rec_badge = "![recommended](.github/badges/recommended.svg)"
     overall_badge = "![overall](.github/badges/overall.svg)"
 
-    lines.append(f"| **Required** | {req_badge} | N/A |")
-    lines.append(f"| Wire format (proto2) | {get_status('Required', 'Proto2', 'Wire format')} | N/A |")
-    lines.append(f"| Wire format (proto3) | {get_status('Required', 'Proto3', 'Wire format')} | N/A |")
-    lines.append(f"| JSON (proto2) | {get_status('Required', 'Proto2', 'JSON')} | N/A |")
-    lines.append(f"| JSON (proto3) | {get_status('Required', 'Proto3', 'JSON')} | N/A |")
-    lines.append(f"| **Recommended** | {rec_badge} | N/A |")
-    lines.append(f"| Wire format | {get_status('Recommended', None, 'Wire format')} | N/A |")
-    lines.append(f"| JSON | {get_status('Recommended', None, 'JSON')} | N/A |")
-    lines.append(f"| **Overall** | {overall_badge} | N/A |")
+    if zig_protobuf_result is not None:
+        zp_by_cat, zp_by_req = _count_failures(zig_protobuf_result)
+
+        zp_req_badge = "![zig_protobuf_required](.github/badges/zig_protobuf_required.svg)"
+        zp_rec_badge = "![zig_protobuf_recommended](.github/badges/zig_protobuf_recommended.svg)"
+        zp_overall_badge = "![zig_protobuf_overall](.github/badges/zig_protobuf_overall.svg)"
+
+        def zp_status(req, proto, fmt):
+            return _get_status(zp_by_cat, req, proto, fmt)
+
+        zp_col = {
+            "req": zp_req_badge,
+            "rec": zp_rec_badge,
+            "overall": zp_overall_badge,
+            "req_wire_p2": zp_status("Required", "Proto2", "Wire format"),
+            "req_wire_p3": zp_status("Required", "Proto3", "Wire format"),
+            "req_json_p2": zp_status("Required", "Proto2", "JSON"),
+            "req_json_p3": zp_status("Required", "Proto3", "JSON"),
+            "rec_wire": zp_status("Recommended", None, "Wire format"),
+            "rec_json": zp_status("Recommended", None, "JSON"),
+        }
+    else:
+        zp_col = {k: "N/A" for k in [
+            "req", "rec", "overall",
+            "req_wire_p2", "req_wire_p3", "req_json_p2", "req_json_p3",
+            "rec_wire", "rec_json",
+        ]}
+
+    def upb_status(req, proto, fmt):
+        return _get_status(upb_by_cat, req, proto, fmt)
+
+    # Build table
+    lines.append(f"| Category | {impl_name} | zig-protobuf |")
+    lines.append("|----------|-------------|--------------|")
+    lines.append(f"| **Required** | {req_badge} | {zp_col['req']} |")
+    lines.append(f"| Wire format (proto2) | {upb_status('Required', 'Proto2', 'Wire format')} | {zp_col['req_wire_p2']} |")
+    lines.append(f"| Wire format (proto3) | {upb_status('Required', 'Proto3', 'Wire format')} | {zp_col['req_wire_p3']} |")
+    lines.append(f"| JSON (proto2) | {upb_status('Required', 'Proto2', 'JSON')} | {zp_col['req_json_p2']} |")
+    lines.append(f"| JSON (proto3) | {upb_status('Required', 'Proto3', 'JSON')} | {zp_col['req_json_p3']} |")
+    lines.append(f"| **Recommended** | {rec_badge} | {zp_col['rec']} |")
+    lines.append(f"| Wire format | {upb_status('Recommended', None, 'Wire format')} | {zp_col['rec_wire']} |")
+    lines.append(f"| JSON | {upb_status('Recommended', None, 'JSON')} | {zp_col['rec_json']} |")
+    lines.append(f"| **Overall** | {overall_badge} | {zp_col['overall']} |")
 
     return "\n".join(lines)

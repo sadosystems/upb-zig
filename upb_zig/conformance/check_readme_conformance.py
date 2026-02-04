@@ -33,21 +33,30 @@ def extract_table_from_readme(readme_content: str) -> str:
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: check_readme_conformance.py <readme_file>", file=sys.stderr)
-        print("       Reads conformance log from stdin", file=sys.stderr)
-        sys.exit(1)
+    import argparse
 
-    readme_path = Path(sys.argv[1])
+    parser = argparse.ArgumentParser(description="Check README.md conformance table is up to date")
+    parser.add_argument("readme_file", help="Path to README.md")
+    parser.add_argument("--zig-protobuf-log", help="Path to zig-protobuf conformance log file")
+    args = parser.parse_args()
 
-    # Parse conformance log from stdin
+    readme_path = Path(args.readme_file)
+
+    # Parse upb-zig conformance log from stdin
     log_content = sys.stdin.read()
     result = parse_conformance_log(log_content)
-    report = generate_report(result)
+
+    # Parse zig-protobuf conformance log if provided
+    zig_protobuf_result = None
+    if args.zig_protobuf_log:
+        zp_log = Path(args.zig_protobuf_log).read_text(encoding="utf-8")
+        zig_protobuf_result = parse_conformance_log(zp_log)
+
+    report = generate_report(result, zig_protobuf_result=zig_protobuf_result)
     expected_table = extract_table_from_report(report)
 
     # Read actual table from README
-    actual_table = extract_table_from_readme(Path(readme_path).read_text(encoding="utf-8"))
+    actual_table = extract_table_from_readme(readme_path.read_text(encoding="utf-8"))
 
     if expected_table == actual_table:
         print("README conformance table is up to date.")

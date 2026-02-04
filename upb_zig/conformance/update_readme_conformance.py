@@ -59,10 +59,11 @@ def _generate_progress_bar_svg(percentage: float) -> str:
 </svg>"""
 
 
-def generate_badges(result: ConformanceResult, badges_dir: Path):
-    """Generate SVG progress bar badges for conformance percentages."""
-    badges_dir.mkdir(parents=True, exist_ok=True)
-
+def _badges_for_result(
+    result: ConformanceResult,
+    prefix: str = "",
+) -> dict[str, float]:
+    """Compute badge percentages for a conformance result."""
     failed_by_req: defaultdict[str, int] = defaultdict(int)
     for test in result.failed:
         failed_by_req[test.requirement_level] += 1
@@ -71,11 +72,24 @@ def generate_badges(result: ConformanceResult, badges_dir: Path):
     rec_failures = failed_by_req.get("Recommended", 0)
     total_run = result.num_passed + result.num_failed
 
-    badges: dict[str, float] = {
-        "required": 100 * (TOTAL_REQUIRED - req_failures) / TOTAL_REQUIRED,
-        "recommended": 100 * (TOTAL_RECOMMENDED - rec_failures) / TOTAL_RECOMMENDED,
-        "overall": 100 * result.num_passed / total_run if total_run > 0 else 0,
+    return {
+        f"{prefix}required": 100 * (TOTAL_REQUIRED - req_failures) / TOTAL_REQUIRED,
+        f"{prefix}recommended": 100 * (TOTAL_RECOMMENDED - rec_failures) / TOTAL_RECOMMENDED,
+        f"{prefix}overall": 100 * result.num_passed / total_run if total_run > 0 else 0,
     }
+
+
+def generate_badges(
+    result: ConformanceResult,
+    badges_dir: Path,
+    zig_protobuf_result: ConformanceResult | None = None,
+):
+    """Generate SVG progress bar badges for conformance percentages."""
+    badges_dir.mkdir(parents=True, exist_ok=True)
+
+    badges = _badges_for_result(result)
+    if zig_protobuf_result is not None:
+        badges.update(_badges_for_result(zig_protobuf_result, prefix="zig_protobuf_"))
 
     for name, pct in badges.items():
         svg = _generate_progress_bar_svg(pct)
@@ -95,22 +109,31 @@ def extract_table_from_report(report: str) -> str:
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: update_readme_conformance.py <readme_file>", file=sys.stderr)
-        print("       Reads conformance log from stdin", file=sys.stderr)
-        sys.exit(1)
+    import argparse
 
-    readme_path = Path(sys.argv[1])
+    parser = argparse.ArgumentParser(description="Update README.md conformance table")
+    parser.add_argument("readme_file", help="Path to README.md")
+    parser.add_argument("--zig-protobuf-log", help="Path to zig-protobuf conformance log file")
+    args = parser.parse_args()
 
-    # Parse conformance log from stdin
+    readme_path = Path(args.readme_file)
+
+    # Parse upb-zig conformance log from stdin
     log_content = sys.stdin.read()
     result = parse_conformance_log(log_content)
-    report = generate_report(result)
+
+    # Parse zig-protobuf conformance log if provided
+    zig_protobuf_result = None
+    if args.zig_protobuf_log:
+        zp_log = Path(args.zig_protobuf_log).read_text(encoding="utf-8")
+        zig_protobuf_result = parse_conformance_log(zp_log)
+
+    report = generate_report(result, zig_protobuf_result=zig_protobuf_result)
     new_table = extract_table_from_report(report)
 
     # Generate badges
     badges_dir = readme_path.parent / ".github" / "badges"
-    generate_badges(result, badges_dir)
+    generate_badges(result, badges_dir, zig_protobuf_result=zig_protobuf_result)
     print(f"Generated badges in {badges_dir}")
 
     # Read current README

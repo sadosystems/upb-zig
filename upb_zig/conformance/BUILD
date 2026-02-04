@@ -147,7 +147,9 @@ py_binary(
 make_shell_script(
     name = "gen_check_readme_conformance_test",
     out = "check_readme_conformance_test.sh",
-    contents = "$1 --maximum_edition 2023 --enforce_recommended $2 2>&1 | $3 $4",
+    # $1=conformance_test_runner $2=conformance_zig $3=check_readme_conformance
+    # $4=README.md $5=zig_protobuf_expected_failures $6=protobuf_zig_testee
+    contents = "UPB_LOG=$(mktemp) && ZIG_LOG=$(mktemp) && trap 'rm -f \"$UPB_LOG\" \"$ZIG_LOG\"' EXIT; $1 --maximum_edition 2023 --enforce_recommended $2 > \"$UPB_LOG\" 2>&1; $1 --failure_list $5 $6 > \"$ZIG_LOG\" 2>&1; cat \"$UPB_LOG\" | $3 $4 --zig-protobuf-log \"$ZIG_LOG\"",
 )
 
 sh_test(
@@ -158,12 +160,16 @@ sh_test(
         "$(location :conformance_zig)",
         "$(location :check_readme_conformance)",
         "$(location //:README.md)",
+        "$(location //upb_zig/conformance/protobuf-zig:expected_failures.txt)",
+        "$(location //upb_zig/conformance/protobuf-zig:protobuf_zig_testee)",
     ],
     data = [
         "@com_google_protobuf//conformance:conformance_test_runner",
         ":conformance_zig",
         ":check_readme_conformance",
         "//:README.md",
+        "//upb_zig/conformance/protobuf-zig:expected_failures.txt",
+        "//upb_zig/conformance/protobuf-zig:protobuf_zig_testee",
     ],
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
@@ -183,7 +189,9 @@ py_binary(
 make_shell_script(
     name = "gen_update_readme_conformance",
     out = "update_readme_conformance.sh",
-    contents = "$1 --maximum_edition 2023 --enforce_recommended $2 2>&1 | $3 ${BUILD_WORKSPACE_DIRECTORY}/README.md",
+    # $1=conformance_test_runner $2=conformance_zig $3=update_readme_conformance
+    # $4=zig_protobuf_expected_failures $5=protobuf_zig_testee
+    contents = "UPB_LOG=$(mktemp) && ZIG_LOG=$(mktemp) && trap 'rm -f \"$UPB_LOG\" \"$ZIG_LOG\"' EXIT; $1 --maximum_edition 2023 --enforce_recommended $2 > \"$UPB_LOG\" 2>&1; $1 --failure_list $4 $5 > \"$ZIG_LOG\" 2>&1; cat \"$UPB_LOG\" | $3 ${BUILD_WORKSPACE_DIRECTORY}/README.md --zig-protobuf-log \"$ZIG_LOG\"",
 )
 
 sh_binary(
@@ -194,11 +202,15 @@ sh_binary(
         "$(location @com_google_protobuf//conformance:conformance_test_runner)",
         "$(location :conformance_zig)",
         "$(location :update_readme_conformance)",
+        "$(location //upb_zig/conformance/protobuf-zig:expected_failures.txt)",
+        "$(location //upb_zig/conformance/protobuf-zig:protobuf_zig_testee)",
     ],
     data = [
         "@com_google_protobuf//conformance:conformance_test_runner",
         ":conformance_zig",
         ":update_readme_conformance",
+        "//upb_zig/conformance/protobuf-zig:expected_failures.txt",
+        "//upb_zig/conformance/protobuf-zig:protobuf_zig_testee",
     ],
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
