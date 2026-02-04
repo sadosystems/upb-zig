@@ -80,6 +80,7 @@ The current implementations being tested are:
 <!-- BEGIN CONFORMANCE TABLE -->
 | Category | upb-zig | zig-protobuf |
 |----------|-------------|--------------|
+| **Overall** | ![overall](.github/badges/overall.svg) | ![overall](.github/badges/zig_protobuf_overall.svg) |
 | **Required** | ![required](.github/badges/required.svg) | ![required](.github/badges/zig_protobuf_required.svg) |
 | Wire format (proto2) | 0 failures | 0 failures |
 | Wire format (proto3) | 0 failures | 341 failures |
@@ -88,7 +89,6 @@ The current implementations being tested are:
 | **Recommended** | ![recommended](.github/badges/recommended.svg) | ![recommended](.github/badges/zig_protobuf_recommended.svg) |
 | Wire format | 0 failures | 0 failures |
 | JSON | 12 failures | 0 failures |
-| **Overall** | ![overall](.github/badges/overall.svg) | ![overall](.github/badges/zig_protobuf_overall.svg) |
 <!-- END CONFORMANCE TABLE -->
 
 Here is a more fine grained test by test breakdown: [todo add this]
