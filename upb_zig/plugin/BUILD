@@ -30,4 +30,4 @@ py_binary(
     ],
 )
 
-exports_files(["DESCRIPTION.md"])
+exports_files(["PYPI_DESCRIPTION.md"])

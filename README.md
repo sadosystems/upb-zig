@@ -10,9 +10,10 @@ You should probably use [zig-protobuf](https://github.com/Arwalk/zig-protobuf) i
 Also if you are a bazel user, I have some rules for you! 
 
 ## Installation
+install the protoc plugin via 
 ### PyPI
 ```shell
-pip install upb-zig
+pip install protoc-gen-zig
 ```
 
 ### Bazel

@@ -1,7 +1,6 @@
 # protoc-gen-zig
 
-A protoc plugin that generates Zig bindings for Protocol Buffers, backed by the
-[upb](https://github.com/protocolbuffers/protobuf/tree/main/upb) C runtime.
+A protoc plugin that generates Zig bindings for Protocol Buffers, backed by [upb](https://github.com/protocolbuffers/protobuf/tree/main/upb).
 `protoc-gen-zig` is part of the [upb-zig](https://github.com/sadosystems/upb-zig)
 project. `protoc-gen-zig` is the only Zig Protobuf implementation that passes [ the Protobuf conformance
 tests](https://github.com/sadosystems/upb-zig/tree/master?tab=readme-ov-file#protobuf-conformance-tests).
