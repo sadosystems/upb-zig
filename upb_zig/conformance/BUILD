@@ -151,7 +151,7 @@ sh_test(
 py_binary(
     name = "update_readme_conformance",
     srcs = ["update_readme_conformance.py"],
-    deps = [":conformance_report_lib", "@dev_pypi//anybadge"],
+    deps = [":conformance_report_lib"],
     python_version = "PY3",
 )
 

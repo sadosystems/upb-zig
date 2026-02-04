@@ -89,14 +89,15 @@ def parse_conformance_log(log: str) -> ConformanceResult:
     return result
 
 
+# Total test counts for edition 2023 (from protobuf-conformance baseline)
+# https://github.com/bufbuild/protobuf-conformance
+TOTAL_REQUIRED = 4267
+TOTAL_RECOMMENDED = 1300
+
+
 def generate_report(result: ConformanceResult, impl_name: str = "upb-zig") -> str:
     """Generate a markdown report from parsed results."""
     lines = []
-
-    # Total test counts for edition 2023 (from protobuf-conformance baseline)
-    # https://github.com/bufbuild/protobuf-conformance
-    TOTAL_REQUIRED = 4267
-    TOTAL_RECOMMENDED = 1300
 
     # Count failures by (requirement_level, proto_version, test_format)
     failed_by_category: defaultdict[tuple[str, str, str], int] = defaultdict(int)
@@ -125,14 +126,19 @@ def generate_report(result: ConformanceResult, impl_name: str = "upb-zig") -> st
     # Build table in desired format
     lines.append(f"| Category | {impl_name} | zig-protobuf |")
     lines.append("|----------|-------------|--------------|")
-    lines.append(f"| **Required** | {req_pct} | N/A |")
+    badge_base = "https://raw.githubusercontent.com/sadosystems/upb-zig/master/.github/badges"
+    req_badge = "![required](.github/badges/required.svg)"
+    rec_badge = "![recommended](.github/badges/recommended.svg)"
+    overall_badge = "![overall](.github/badges/overall.svg)"
+
+    lines.append(f"| **Required** | {req_badge} | N/A |")
     lines.append(f"| Wire format (proto2) | {get_status('Required', 'Proto2', 'Wire format')} | N/A |")
     lines.append(f"| Wire format (proto3) | {get_status('Required', 'Proto3', 'Wire format')} | N/A |")
     lines.append(f"| JSON (proto2) | {get_status('Required', 'Proto2', 'JSON')} | N/A |")
     lines.append(f"| JSON (proto3) | {get_status('Required', 'Proto3', 'JSON')} | N/A |")
-    lines.append(f"| **Recommended** | {rec_pct} | N/A |")
+    lines.append(f"| **Recommended** | {rec_badge} | N/A |")
     lines.append(f"| Wire format | {get_status('Recommended', None, 'Wire format')} | N/A |")
     lines.append(f"| JSON | {get_status('Recommended', None, 'JSON')} | N/A |")
-    lines.append(f"| **Overall** | {overall_pct} | N/A |")
+    lines.append(f"| **Overall** | {overall_badge} | N/A |")
 
     return "\n".join(lines)

@@ -80,15 +80,15 @@ The current implementations being tested are:
 <!-- BEGIN CONFORMANCE TABLE -->
 | Category | upb-zig | zig-protobuf |
 |----------|-------------|--------------|
-| **Required** | 99.7% | N/A |
+| **Required** | ![required](.github/badges/required.svg) | N/A |
 | Wire format (proto2) | 0 failures | N/A |
 | Wire format (proto3) | 0 failures | N/A |
 | JSON (proto2) | 4 failures | N/A |
 | JSON (proto3) | 8 failures | N/A |
-| **Recommended** | 99.1% | N/A |
+| **Recommended** | ![recommended](.github/badges/recommended.svg) | N/A |
 | Wire format | 0 failures | N/A |
 | JSON | 12 failures | N/A |
-| **Overall** | 99.6% | N/A |
+| **Overall** | ![overall](.github/badges/overall.svg) | N/A |
 <!-- END CONFORMANCE TABLE -->
 
 Here is a more fine grained test by test breakdown: [todo add this]
