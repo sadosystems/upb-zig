@@ -13,8 +13,7 @@ import sys
 from google.protobuf.compiler import plugin_pb2 as plugin # pyright: ignore[reportMissingModuleSource]
 from google.protobuf.descriptor_pb2 import FileDescriptorProto # pyright: ignore[reportMissingModuleSource]
 
-from codegen import generate_file
-
+from upb_zig.plugin.codegen import generate_file
 
 def main():
     if sys.stdin.isatty():
