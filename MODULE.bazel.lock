@@ -173,6 +173,33 @@
   },
   "selectedYankedVersions": {},
   "moduleExtensions": {
+    "//bazel/third_party:zig_protobuf_ext.bzl%zig_protobuf": {
+      "general": {
+        "bzlTransitiveDigest": "iPyk773MLschxuPeu2M1hYU2uZyMXfsPsLHCo6TQDwc=",
+        "usagesDigest": "dUSkv5WKXRwJkwJJpZ619jjczuEgSxHyVmgyLXJWEDU=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "zig_protobuf": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "url": "https://github.com/Arwalk/zig-protobuf/archive/refs/tags/v3.0.1.tar.gz",
+              "sha256": "f7ba0c414978813805e6a9f5897fa4a4cb00e775143c96c4625ca4d91ebac77d",
+              "strip_prefix": "zig-protobuf-3.0.1",
+              "build_file": "@@//bazel/third_party:zig_protobuf.BUILD"
+            }
+          }
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "",
+            "bazel_tools",
+            "bazel_tools"
+          ]
+        ]
+      }
+    },
     "@@apple_support+//crosstool:setup.bzl%apple_cc_configure_extension": {
       "general": {
         "bzlTransitiveDigest": "p7Ghcq3+nnQxCrf+U3xnhdn7yOSTDbcFyGHK7Ja+rU4=",
