@@ -1,5 +1,5 @@
 load("@rules_zig//zig:defs.bzl", "zig_library", "zig_binary")
-load("@//bazel/third_party:zig_protobuf_ext.bzl", "zig_protobuf_compile")
+load("@//zig_protobuf:defs.bzl", "zig_protobuf_compile")
 
 package(default_visibility = ["//visibility:public"])
 

@@ -1,3 +1,4 @@
+UNDER CONSTRUCTION
 # protoc-gen-zig
 
 A protoc plugin that generates Zig bindings for Protocol Buffers, backed by [upb](https://github.com/protocolbuffers/protobuf/tree/main/upb).

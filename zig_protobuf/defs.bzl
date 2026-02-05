@@ -10,7 +10,7 @@ def _zig_protobuf_impl(ctx):
         url = "https://github.com/Arwalk/zig-protobuf/archive/2828be045c5f3e55c6f3f239c2ec40bc480a26ca.tar.gz",
         sha256 = "583b7f27775278f64bcb08e5296f088c259eeb8cec93d6792967f13140dac3bf",
         strip_prefix = "zig-protobuf-2828be045c5f3e55c6f3f239c2ec40bc480a26ca",
-        build_file = Label("//bazel/third_party:zig_protobuf.BUILD"),
+        build_file = Label("//zig_protobuf:zig_protobuf.BUILD"),
     )
 
 zig_protobuf = module_extension(
@@ -64,12 +64,17 @@ def _zig_protobuf_compile_impl(ctx):
     # Post-processing fixes for zig-protobuf code generation issues:
     # 1. Remove duplicate enum tag values (proto3 allow_alias)
     # 2. Fix indirect recursive message cycles (should use ?*T not ?T)
+    # Note: Using POSIX-compatible awk (no gawk extensions like match() with array capture)
     fix_script = r"""
 for f in {out_files}; do
     awk '
-    /enum\(i32\)/ {{ in_enum=1; delete seen }}
+    /enum\(i32\)/ {{ in_enum=1; split("", seen) }}
     in_enum && /^[[:space:]]*_,/ {{ in_enum=0 }}
-    in_enum {{ if (match($0, /= ([0-9-]+),/, a)) {{ if (a[1] in seen) next; seen[a[1]]=1 }} }}
+    in_enum && /= -?[0-9]+,/ {{
+        val = $0; sub(/.*= */, "", val); sub(/,.*/, "", val)
+        if (val in seen) next
+        seen[val] = 1
+    }}
     {{ print }}
     ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
     # Fix indirect recursive submessage fields.

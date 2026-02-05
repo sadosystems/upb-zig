@@ -42,7 +42,7 @@ py_wheel(
     distribution = "protoc_gen_zig",
     version = "0.0.1",
     python_tag = "py3",
-    summary = "A protoc plugin that generates Zig bindings over upb",
+    summary = "A protoc plugin that generates Zig bindings over upb. UNDER CONSTRUCTION",
     description_file = "//upb_zig/plugin:PYPI_DESCRIPTION.md",
     homepage = "https://github.com/sadosystems/upb-zig",
     author = "William Murray",

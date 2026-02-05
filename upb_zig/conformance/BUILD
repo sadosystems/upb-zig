@@ -31,23 +31,19 @@ zig_proto_library(
     deps = ["@com_google_protobuf//conformance/test_protos:test_messages_proto2_editions_proto"],
 )
 
-# Test that the generated code compiles with the runtime
-# Uses the generated file directly with runtime dependencies
+# Test that the generated conformance proto code compiles and types work correctly
 zig_test(
-    name = "basic_conformance",
-    main = "basic_conformance.zig",
+    name = "conformance_protos_test",
+    main = "conformance_protos.zig",
     deps = [":conformance_pb", "//upb_zig/runtime:upb_zig"],
     zigopts = ["-lc"],
 )
 
-# Test that test_messages_proto3 compiles with all its dependencies
+# Test that transitive dependencies resolve correctly
 zig_test(
-    name = "test_messages_proto3_compile",
-    main = "test_proto3_compile.zig",
-    deps = [
-        ":zig_test_messages_proto3", 
-        "//upb_zig/runtime:upb_zig"
-    ],
+    name = "transitive_deps_test",
+    main = "transitive_deps.zig",
+    deps = [":zig_test_messages_proto3", "//upb_zig/runtime:upb_zig"],
     zigopts = ["-lc"],
 )
 
@@ -55,9 +51,9 @@ zig_test(
 # Reads ConformanceRequest from stdin, writes ConformanceResponse to stdout
 # Uses generated Zig bindings to decode/encode test messages
 zig_binary(
-    name = "conformance_zig",
+    name = "testee",
     testonly = True,
-    main = "conformance.zig",
+    main = "conformance_testee.zig",
     deps = [
         "//upb_zig/runtime:upb_zig",
         ":conformance_pb",
@@ -67,6 +63,7 @@ zig_binary(
         ":zig_test_messages_proto2_editions",
     ],
     zigopts = ["-lc"],
+    visibility = ["//conformance:__pkg__"],
 )
 
 # Full conformance test suite
@@ -83,137 +80,21 @@ make_shell_script(
 )
 
 sh_test(
-    name = "conformance_test",
+    name = "conformance",
     srcs = ["test_conformance_upb_zig_dynamic_minitable.sh"],
     args = [
         "$(location @com_google_protobuf//conformance:conformance_test_runner)",
         "$(location :expected_failures.txt)",
-        "$(location :conformance_zig)",
+        "$(location testee)",
     ],
     data = [
         "@com_google_protobuf//conformance:conformance_test_runner",
         ":expected_failures.txt",
-        ":conformance_zig",
+        ":testee",
     ],
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
     tags = ["should_fail"],
-)
-
-make_shell_script(
-    name = "gen_test_conformance_zig_protobuf",
-    out = "test_conformance_zig_protobuf.sh",
-    contents = "$1 --failure_list $2 $3",
-)
-
-sh_test(
-    name = "zig_protobuf_conformance_test",
-    srcs = ["test_conformance_zig_protobuf.sh"],
-    args = [
-        "$(location @com_google_protobuf//conformance:conformance_test_runner)",
-        "$(location //upb_zig/conformance/protobuf-zig:expected_failures.txt)",
-        "$(location //upb_zig/conformance/protobuf-zig:protobuf_zig_testee)",
-    ],
-    data = [
-        "@com_google_protobuf//conformance:conformance_test_runner",
-        "//upb_zig/conformance/protobuf-zig:expected_failures.txt",
-        "//upb_zig/conformance/protobuf-zig:protobuf_zig_testee",
-    ],
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-)
-
-##################################################################################
-#                        Generate Conformance Report                             #
-##################################################################################
-
-# Python library for parsing conformance output and generating report (markdown table)
-py_library(
-    name = "conformance_report_lib",
-    srcs = ["conformance_report.py"],
-)
-
-# Check that README conformance table is up to date
-py_binary(
-    name = "check_readme_conformance",
-    srcs = ["check_readme_conformance.py"],
-    deps = [":conformance_report_lib"],
-)
-
-make_shell_script(
-    name = "gen_check_readme_conformance_test",
-    out = "check_readme_conformance_test.sh",
-    # $1=conformance_test_runner $2=conformance_zig $3=check_readme_conformance
-    # $4=README.md $5=zig_protobuf_expected_failures $6=protobuf_zig_testee
-    contents = "UPB_LOG=$(mktemp) && ZIG_LOG=$(mktemp) && trap 'rm -f \"$UPB_LOG\" \"$ZIG_LOG\"' EXIT; $1 --maximum_edition 2023 --enforce_recommended $2 > \"$UPB_LOG\" 2>&1; $1 --failure_list $5 $6 > \"$ZIG_LOG\" 2>&1; cat \"$UPB_LOG\" | $3 $4 --zig-protobuf-log \"$ZIG_LOG\"",
-)
-
-sh_test(
-    name = "conformance_report_up_to_date",
-    srcs = ["check_readme_conformance_test.sh"],
-    args = [
-        "$(location @com_google_protobuf//conformance:conformance_test_runner)",
-        "$(location :conformance_zig)",
-        "$(location :check_readme_conformance)",
-        "$(location //:README.md)",
-        "$(location //upb_zig/conformance/protobuf-zig:expected_failures.txt)",
-        "$(location //upb_zig/conformance/protobuf-zig:protobuf_zig_testee)",
-    ],
-    data = [
-        "@com_google_protobuf//conformance:conformance_test_runner",
-        ":conformance_zig",
-        ":check_readme_conformance",
-        "//:README.md",
-        "//upb_zig/conformance/protobuf-zig:expected_failures.txt",
-        "//upb_zig/conformance/protobuf-zig:protobuf_zig_testee",
-    ],
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-    tags = ["doc_checking"],
-)
-
-# Update README.md with current conformance results
-py_binary(
-    name = "update_readme_conformance",
-    srcs = ["update_readme_conformance.py"],
-    deps = [":conformance_report_lib"],
-    python_version = "PY3",
-)
-
-make_shell_script(
-    name = "gen_update_readme_conformance",
-    out = "update_readme_conformance.sh",
-    # $1=conformance_test_runner $2=conformance_zig $3=update_readme_conformance
-    # $4=zig_protobuf_expected_failures $5=protobuf_zig_testee
-    contents = "UPB_LOG=$(mktemp) && ZIG_LOG=$(mktemp) && trap 'rm -f \"$UPB_LOG\" \"$ZIG_LOG\"' EXIT; $1 --maximum_edition 2023 --enforce_recommended $2 > \"$UPB_LOG\" 2>&1; $1 --failure_list $4 $5 > \"$ZIG_LOG\" 2>&1; cat \"$UPB_LOG\" | $3 ${BUILD_WORKSPACE_DIRECTORY}/README.md --zig-protobuf-log \"$ZIG_LOG\"",
-)
-
-sh_binary(
-    name = "update_conformance_report",
-    srcs = ["update_readme_conformance.sh"],
-    testonly = True,
-    args = [
-        "$(location @com_google_protobuf//conformance:conformance_test_runner)",
-        "$(location :conformance_zig)",
-        "$(location :update_readme_conformance)",
-        "$(location //upb_zig/conformance/protobuf-zig:expected_failures.txt)",
-        "$(location //upb_zig/conformance/protobuf-zig:protobuf_zig_testee)",
-    ],
-    data = [
-        "@com_google_protobuf//conformance:conformance_test_runner",
-        ":conformance_zig",
-        ":update_readme_conformance",
-        "//upb_zig/conformance/protobuf-zig:expected_failures.txt",
-        "//upb_zig/conformance/protobuf-zig:protobuf_zig_testee",
-    ],
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
 )
