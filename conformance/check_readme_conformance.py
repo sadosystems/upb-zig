@@ -42,7 +42,7 @@ def main():
     else:
         print("README.md conformance table is out of date. To fix, run:")
         print("")
-        print("  bazel run //upb_zig/conformance:update_conformance_report")
+        print("  bazel run //conformance:update_conformance_report")
         sys.exit(1)
 
 
