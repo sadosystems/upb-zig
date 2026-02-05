@@ -1,3 +1,3 @@
 # This is for zig-protobuf: https://github.com/Arwalk/zig-protobuf
-zig_protobuf = use_extension("//bazel/third_party:zig_protobuf_ext.bzl", "zig_protobuf")
+zig_protobuf = use_extension("//zig_protobuf:defs.bzl", "zig_protobuf")
 use_repo(zig_protobuf, "zig_protobuf")

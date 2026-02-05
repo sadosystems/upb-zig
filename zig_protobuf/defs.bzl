@@ -10,7 +10,7 @@ def _zig_protobuf_impl(ctx):
         url = "https://github.com/Arwalk/zig-protobuf/archive/2828be045c5f3e55c6f3f239c2ec40bc480a26ca.tar.gz",
         sha256 = "583b7f27775278f64bcb08e5296f088c259eeb8cec93d6792967f13140dac3bf",
         strip_prefix = "zig-protobuf-2828be045c5f3e55c6f3f239c2ec40bc480a26ca",
-        build_file = Label("//bazel/third_party:zig_protobuf.BUILD"),
+        build_file = Label("//zig_protobuf:zig_protobuf.BUILD"),
     )
 
 zig_protobuf = module_extension(

@@ -173,10 +173,10 @@
   },
   "selectedYankedVersions": {},
   "moduleExtensions": {
-    "//bazel/third_party:zig_protobuf_ext.bzl%zig_protobuf": {
+    "//zig_protobuf:defs.bzl%zig_protobuf": {
       "general": {
-        "bzlTransitiveDigest": "O0eWDI8m34KsePi73dv6sABo8DwakqciXT+mWo+4VKg=",
-        "usagesDigest": "dUSkv5WKXRwJkwJJpZ619jjczuEgSxHyVmgyLXJWEDU=",
+        "bzlTransitiveDigest": "VMdXfJho3Y1jiIXIncvgqifV0iTn5oimLQqo/+GtphE=",
+        "usagesDigest": "ABtEhtBrdj83ucTau/Wriqh60zkOG7jXEXinMpZOcgE=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -187,7 +187,7 @@
               "url": "https://github.com/Arwalk/zig-protobuf/archive/2828be045c5f3e55c6f3f239c2ec40bc480a26ca.tar.gz",
               "sha256": "583b7f27775278f64bcb08e5296f088c259eeb8cec93d6792967f13140dac3bf",
               "strip_prefix": "zig-protobuf-2828be045c5f3e55c6f3f239c2ec40bc480a26ca",
-              "build_file": "@@//bazel/third_party:zig_protobuf.BUILD"
+              "build_file": "@@//zig_protobuf:zig_protobuf.BUILD"
             }
           }
         },
