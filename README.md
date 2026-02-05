@@ -89,7 +89,7 @@ The current implementations being tested are:
 | JSON (proto3) | 8 failures | 235 failures |
 | **Recommended** | ![recommended](.github/badges/recommended.svg) | ![recommended](.github/badges/zig_protobuf_recommended.svg) |
 | Wire format | 0 failures | 0 failures |
-| JSON | 12 failures | 0 failures |
+| JSON | 12 failures | 0 failures |asda
 <!-- END CONFORMANCE TABLE -->
 
 Here is a more fine grained test by test breakdown: [todo add this]
