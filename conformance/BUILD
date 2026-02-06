@@ -1,4 +1,3 @@
-# Conformance report utilities
 load("//bazel:build_defs.bzl", "make_shell_script")
 
 # Python library for parsing conformance output and generating report (markdown table)
