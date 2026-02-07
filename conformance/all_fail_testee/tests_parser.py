@@ -43,3 +43,4 @@ print(f"{count_tests(all_pass_json['Recommended'])}")
 
 print(f"{count_tests(all_pass_json['Required']['Proto2'])}")
 print(f"{count_tests(all_pass_json['Required']['Proto3'])}")
+

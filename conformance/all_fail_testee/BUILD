@@ -2,96 +2,59 @@ load("//bazel:build_defs.bzl", "make_shell_script")
 load("@rules_python//python:proto.bzl", "py_proto_library")
 load("@com_google_protobuf//conformance:defs.bzl", "conformance_test")
 
-
 # the idea here is to contrive a conformance testee that fails every single one of 
 # the conformance tests which will allow us to capture a master list of all the tests
-# IknowIknow... I really could not come up with a better solution. If you have one PR
-# it pls.
+# IknowIknow... I really could not come up with a better solution.
 
+# I only need to pull in conformance_py_pb2 for this one since I wont bother with 
+# actually decoding the messages
 py_proto_library(
     name = "conformance_py_pb2",
     deps = ["@com_google_protobuf//conformance:conformance_proto"],
     testonly = True
 )
-py_proto_library(
-    name = "test_messages_proto3_py_pb2",
-    deps = ["@com_google_protobuf//conformance/test_protos:test_messages_proto3_proto"],
-    testonly = True
-)
 
-py_proto_library(
-    name = "test_messages_proto2_py_pb2",
-    deps = ["@com_google_protobuf//conformance/test_protos:test_messages_proto2_proto"],
-    testonly = True
-)
-
-py_proto_library(
-    name = "test_messages_proto3_editions_py_pb2",
-    deps = ["@com_google_protobuf//conformance/test_protos:test_messages_proto3_editions_proto"],
-    testonly = True
-)
-
-py_proto_library(
-    name = "test_messages_proto2_editions_py_pb2",
-    deps = ["@com_google_protobuf//conformance/test_protos:test_messages_proto2_editions_proto"],
-    testonly = True
-)
-
-# Conformance testee binary that systematically fails all tests. It still 
-# implements the conformance testing protocol (reads ConformanceRequest from 
-# stdin, write ConformanceResponse to stdout) just to keep the tests moving
+# Conformance testee binary that systematically fails all tests.
 py_binary(
     name = "testee",
     main = "testee.py",
     srcs = ["testee.py"],
-    testonly = True,
-    deps = [
-        ":conformance_py_pb2",
-        ":test_messages_proto3_py_pb2",
-        ":test_messages_proto2_py_pb2",
-        ":test_messages_proto3_editions_py_pb2",
-        ":test_messages_proto2_editions_py_pb2",
-        "@com_google_protobuf//:protobuf_python",
-    ],
-    python_version = "PY3",
-)
-
-py_binary(
-    name = "my_testee",
-    main = "testee.py",
-    srcs = ["testee.py"],
-    testonly = True,
     deps = [
         ":conformance_py_pb2",
         "@rules_python//python/runfiles",
         "@pypi//protobuf"
     ],
     python_version = "PY3",
+    testonly = True,
+)
+
+# genrule that runs the all fail testee, calling this all_tests because that 
+# is what this used as.
+genrule(
+    name = "all_tests",
+    outs = ["all_tests.txt"],
+    tools = [":testee", "@com_google_protobuf//conformance:conformance_test_runner"],
+    cmd = "$(location @com_google_protobuf//conformance:conformance_test_runner) --maximum_edition 2023 --enforce_recommended $(location :testee) > $@ 2>&1 || true",
+    testonly = True,
 )
 
 
-
-make_shell_script(
-    name = "gen_test_conformance_all_fail",
-    out = "test_conformance_all_fail.sh",
-    contents = "$1 --maximum_edition 2023 --enforce_recommended $2",
+# tool that converts test result.txt files to a more usable format
+py_binary(
+    name = "test_results_parser",
+    main = "test_results_parser.py",
+    srcs = ["test_results_parser.py"],
+    data = [":all_tests"],
+    python_version = "PY3",
+    deps = ["@dev_pypi//click"],
+    testonly = True,
 )
 
 genrule(
-    name = "all_tests",
+    name = "markdown_table",
+    outs = ["conformance_results.md"],
+    tools = [":test_results_parser"],
+    srcs = [":all_tests", "//upb_zig/conformance:upb_fails", "//zig_protobuf/conformance:protobuf_zig_fails"],
+    cmd = "$(location :test_results_parser) -a $(location :all_tests) --upb-fails $(location //upb_zig/conformance:upb_fails) --zig-pb-fails $(location //zig_protobuf/conformance:protobuf_zig_fails) > $@",
     testonly = True,
-    outs = ["all_tests.txt"],
-    tools = [":my_testee", "@com_google_protobuf//conformance:conformance_test_runner"],
-    cmd = "$(location @com_google_protobuf//conformance:conformance_test_runner) --enforce_recommended $(location :my_testee) > $@ 2>&1 || true",
-)
-
-
-py_binary(
-    name = "test_parse",
-    main = "tests_parser.py",
-    srcs = ["tests_parser.py"],
-    data = [":all_tests"],
-    testonly = True,
-    python_version = "PY3",
-    deps = ["@rules_python//python/runfiles"],
 )

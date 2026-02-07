@@ -4,6 +4,8 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//upb_zig:defs.bzl", "zig_proto_library")
 load("//bazel:build_defs.bzl", "make_shell_script")
 
+package(default_visibility = ["//visibility:public"])
+
 zig_proto_library(
     name = "conformance_pb",
     deps = ["@com_google_protobuf//conformance:conformance_proto"],
