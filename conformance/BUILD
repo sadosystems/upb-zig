@@ -54,7 +54,7 @@ sh_binary(
 make_shell_script(
     name = "up_to_date_script",
     out = "up_to_date.sh",
-    contents = "$1 up-to-date --readme ${BUILD_WORKSPACE_DIRECTORY}/README.md --table $2",
+    contents = "$1 up-to-date --readme $2 --table $3",
 )
 
 sh_test(
@@ -62,10 +62,12 @@ sh_test(
     srcs = ["up_to_date.sh"],
     args = [
         "$(location :test_results_parser)",
+        "$(location //:README.md)",
         "$(location :markdown_table)",
     ],
     data = [
         ":test_results_parser",
+        "//:README.md",
         ":markdown_table",
     ],
     tags = ["doc_checking"],
