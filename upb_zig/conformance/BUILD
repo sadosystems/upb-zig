@@ -76,7 +76,16 @@ zig_binary(
 make_shell_script(
     name = "gen_test_conformance_upb_zig_dynamic_minitable",
     out = "test_conformance_upb_zig_dynamic_minitable.sh",
-    contents = "$1 --maximum_edition 2023 --enforce_recommended --failure_list $2 $3",
+    contents = "$1 --maximum_edition 2023 --enforce_recommended $2",
+    # contents = "$1 --maximum_edition 2023 --enforce_recommended --failure_list $2 $3",
+)
+
+genrule(
+    name = "upb_fails",
+    testonly = True,
+    outs = ["upb_fails.txt"],
+    tools = [":testee", "@com_google_protobuf//conformance:conformance_test_runner"],
+    cmd = "$(location @com_google_protobuf//conformance:conformance_test_runner) --maximum_edition 2023 --enforce_recommended $(location :testee) > $@ 2>&1 || true",
 )
 
 sh_test(
@@ -84,12 +93,12 @@ sh_test(
     srcs = ["test_conformance_upb_zig_dynamic_minitable.sh"],
     args = [
         "$(location @com_google_protobuf//conformance:conformance_test_runner)",
-        "$(location :expected_failures.txt)",
+        # "$(location :expected_failures.txt)",
         "$(location testee)",
     ],
     data = [
         "@com_google_protobuf//conformance:conformance_test_runner",
-        ":expected_failures.txt",
+        # ":expected_failures.txt",
         ":testee",
     ],
     target_compatible_with = select({

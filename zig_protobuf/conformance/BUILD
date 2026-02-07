@@ -44,4 +44,10 @@ sh_test(
     tags = ["should_fail"],
 )
 
-
+genrule(
+    name = "protobuf_zig_fails",
+    testonly = True,
+    outs = ["protobuf_zig_fails.txt"],
+    tools = [":protobuf_zig_testee", "@com_google_protobuf//conformance:conformance_test_runner"],
+    cmd = "$(location @com_google_protobuf//conformance:conformance_test_runner) --maximum_edition 2023 --enforce_recommended $(location :protobuf_zig_testee) > $@ 2>&1 || true",
+)
