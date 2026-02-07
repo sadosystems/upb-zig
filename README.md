@@ -79,17 +79,20 @@ The current implementations being tested are:
 
 ### Results
 <!-- BEGIN CONFORMANCE TABLE -->
-| Category | upb-zig | zig-protobuf |
-|----------|-------------|--------------|
-| **Overall** | ![overall](.github/badges/overall.svg) | ![overall](.github/badges/zig_protobuf_overall.svg) |
-| **Required** | ![required](.github/badges/required.svg) | ![required](.github/badges/zig_protobuf_required.svg) |
-| Wire format (proto2) | 0 failures | 0 failures |
-| Wire format (proto3) | 0 failures | 341 failures |
-| JSON (proto2) | 4 failures | 0 failures |
-| JSON (proto3) | 8 failures | 235 failures |
-| **Recommended** | ![recommended](.github/badges/recommended.svg) | ![recommended](.github/badges/zig_protobuf_recommended.svg) |
-| Wire format | 0 failures | 0 failures |
-| JSON | 12 failures | 0 failures |
+Category|upb-zig|zig-protobuf
+---------|---------|---------
+Overall | ![5591_5615](.github/badges/5591_5615.svg) | ![813_5615](.github/badges/813_5615.svg)
+Required | ![4303_4315](.github/badges/4303_4315.svg) | ![579_4315](.github/badges/579_4315.svg)
+Required Proto2 | ![993_995](.github/badges/993_995.svg) | ![0_995](.github/badges/0_995.svg)
+Required Proto3 | ![1151_1155](.github/badges/1151_1155.svg) | ![579_1155](.github/badges/579_1155.svg)
+Required Editions_Proto2 | ![990_992](.github/badges/990_992.svg) | ![0_992](.github/badges/0_992.svg)
+Required Editions_Proto3 | ![1151_1155](.github/badges/1151_1155.svg) | ![0_1155](.github/badges/0_1155.svg)
+Recommended | ![1288_1300](.github/badges/1288_1300.svg) | ![234_1300](.github/badges/234_1300.svg)
+Recommended Proto2 | ![315_318](.github/badges/315_318.svg) | ![0_318](.github/badges/0_318.svg)
+Recommended Proto3 | ![330_333](.github/badges/330_333.svg) | ![234_333](.github/badges/234_333.svg)
+Recommended Editions_Proto2 | ![313_316](.github/badges/313_316.svg) | ![0_316](.github/badges/0_316.svg)
+Recommended Editions_Proto3 | ![330_333](.github/badges/330_333.svg) | ![0_333](.github/badges/0_333.svg)
+
 <!-- END CONFORMANCE TABLE -->
 
 Here is a more fine grained test by test breakdown: [todo add this]

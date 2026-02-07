@@ -13,7 +13,7 @@ zig_library(
     ],
 )
 
-# zig-protobuf protoc-gen-zig plugin
+# zig-protobuf protoc-gen-zig plugin binary
 zig_binary(
     name = "protoc-gen-zig",
     main = "bootstrapped-generator/main.zig",

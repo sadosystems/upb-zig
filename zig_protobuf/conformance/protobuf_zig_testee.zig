@@ -61,11 +61,7 @@ fn runTest(allocator: std.mem.Allocator, req: ConformanceRequest) ConformanceRes
     const is_json_input = payload_union == .json_payload;
 
     if (!is_protobuf_input and !is_json_input) {
-        return switch (payload_union) {
-            .text_payload => makeResponse(.{ .skipped = "Text format not supported" }),
-            .jspb_payload => makeResponse(.{ .skipped = "JSPB not supported" }),
-            else => makeResponse(.{ .runtime_error = "Unknown payload type" }),
-        };
+        return makeResponse(.{ .protobuf_payload = "JUNK" });
     }
 
     // Check output format
@@ -74,18 +70,14 @@ fn runTest(allocator: std.mem.Allocator, req: ConformanceRequest) ConformanceRes
     const is_json_output = req.requested_output_format == .JSON;
 
     if (!is_protobuf_output and !is_json_output) {
-        return switch (req.requested_output_format) {
-            .JSPB => makeResponse(.{ .skipped = "JSPB output not supported" }),
-            .TEXT_FORMAT => makeResponse(.{ .skipped = "Text format output not supported" }),
-            else => makeResponse(.{ .skipped = "Unknown output format" }),
-        };
+        return makeResponse(.{ .protobuf_payload = "JUNK" });
     }
 
     // Route by message type
     if (std.mem.eql(u8, req.message_type, "protobuf_test_messages.proto3.TestAllTypesProto3")) {
         return doRoundTrip(TestAllTypesProto3, allocator, payload_union, is_protobuf_input, is_protobuf_output);
     } else {
-        return makeResponse(.{ .skipped = "Unsupported message type" });
+        return makeResponse(.{ .protobuf_payload = "JUNK" });
     }
 }
 

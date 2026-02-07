@@ -18,30 +18,10 @@ zig_binary(
     zigopts = ["-lc", "-freference-trace=20"],
 )
 
-make_shell_script(
-    name = "gen_test_conformance_zig_protobuf",
-    out = "test_conformance_zig_protobuf.sh",
-    contents = "$1 --failure_list $2 $3",
+genrule(
+    name = "protobuf_zig_fails",
+    testonly = True,
+    outs = ["protobuf_zig_fails.txt"],
+    tools = [":protobuf_zig_testee", "@com_google_protobuf//conformance:conformance_test_runner"],
+    cmd = "$(location @com_google_protobuf//conformance:conformance_test_runner) --maximum_edition 2023 --enforce_recommended $(location :protobuf_zig_testee) > $@ 2>&1 || true",
 )
-
-sh_test(
-    name = "conformance",
-    srcs = ["test_conformance_zig_protobuf.sh"],
-    args = [
-        "$(location @com_google_protobuf//conformance:conformance_test_runner)",
-        "$(location :expected_failures.txt)",
-        "$(location :protobuf_zig_testee)",
-    ],
-    data = [
-        "@com_google_protobuf//conformance:conformance_test_runner",
-        ":expected_failures.txt",
-        ":protobuf_zig_testee",
-    ],
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-    tags = ["should_fail"],
-)
-
-
