@@ -105,7 +105,7 @@ done
         progress_message = "Generating zig-protobuf bindings for %s" % ctx.label,
     )
 
-    # Generate the wrapper .zig file that re-exports all generated modules.
+    # Generate wrapper .zig file that re-exports all generated modules.
     wrapper_lines = []
     for out_path, export_name in ctx.attr.outs.items():
         wrapper_lines.append(

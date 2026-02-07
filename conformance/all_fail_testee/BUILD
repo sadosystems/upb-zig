@@ -22,7 +22,6 @@ py_binary(
     deps = [
         ":conformance_py_pb2",
         "@rules_python//python/runfiles",
-        "@pypi//protobuf"
     ],
     python_version = "PY3",
     testonly = True,
@@ -36,25 +35,5 @@ genrule(
     tools = [":testee", "@com_google_protobuf//conformance:conformance_test_runner"],
     cmd = "$(location @com_google_protobuf//conformance:conformance_test_runner) --maximum_edition 2023 --enforce_recommended $(location :testee) > $@ 2>&1 || true",
     testonly = True,
-)
-
-
-# tool that converts test result.txt files to a more usable format
-py_binary(
-    name = "test_results_parser",
-    main = "test_results_parser.py",
-    srcs = ["test_results_parser.py"],
-    data = [":all_tests"],
-    python_version = "PY3",
-    deps = ["@dev_pypi//click"],
-    testonly = True,
-)
-
-genrule(
-    name = "markdown_table",
-    outs = ["conformance_results.md"],
-    tools = [":test_results_parser"],
-    srcs = [":all_tests", "//upb_zig/conformance:upb_fails", "//zig_protobuf/conformance:protobuf_zig_fails"],
-    cmd = "$(location :test_results_parser) -a $(location :all_tests) --upb-fails $(location //upb_zig/conformance:upb_fails) --zig-pb-fails $(location //zig_protobuf/conformance:protobuf_zig_fails) > $@",
-    testonly = True,
+    visibility = ["//visibility:public"]
 )

@@ -1,2 +1,0 @@
-# Expected conformance test failures for zig-protobuf
-# This list will be populated after the first conformance run.

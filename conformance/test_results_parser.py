@@ -1,11 +1,16 @@
-import json
 import re
+import sys
 from typing import Any
 from pathlib import Path
 from dataclasses import dataclass
 from copy import deepcopy
 
 import click
+
+START_MARKER = "<!-- BEGIN CONFORMANCE TABLE -->"
+END_MARKER = "<!-- END CONFORMANCE TABLE -->"
+BADGE_WIDTH = 120
+BADGE_HEIGHT = 20
 
 JSONish = dict[str, "bool | JSONish"]
 
@@ -16,6 +21,10 @@ class SectionResult():
 
     def percent_passing(self):
         return self.passing / self.total * 100
+    
+    def get_badge_ref(self) -> str:
+        unique_str = f"{self.passing}_{self.total}"
+        return f"![{unique_str}](.github/badges/{unique_str}.svg)"
     
     def __repr__(self) -> str:
         percent = self.percent_passing()
@@ -133,7 +142,7 @@ def generaterate_markdown_row(path: list[str], reports: list[JSONish]) -> str:
         result = section_result(sub_tree)
         results.append(result)
 
-    str_results: list[str] = [str(r) for r in results]
+    str_results: list[str] = [r.get_badge_ref() for r in results]
     if path:
         str_results = [" ".join(path)] + str_results
     else:
@@ -151,33 +160,36 @@ def generate_markdown_table(rows: list[list[str]], reports: list[JSONish], names
         str_rows.append(generaterate_markdown_row(row, reports))
     return "\n".join(str_rows)
 
-@click.command()
+@click.group()
+def cli():
+    pass
+
+@cli.command("gen_table")
 @click.option(
-    "-a",
     "--all-tests",
     type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
     help="txt file that contains a result from a testee that fails all conformance tests"
 )
 @click.option(
-    "-u",
     "--upb-fails",
     type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
     help="txt file that contains a result from the upb zig testee"
 )
 @click.option(
-    "-u",
     "--zig-pb-fails",
     type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
     help="txt file that contains a result from the zig-protobuf testee"
 )
-def handle_input(all_tests: Path, upb_fails: Path, zig_pb_fails: Path):
+def gen_table(all_tests: Path, upb_fails: Path, zig_pb_fails: Path):
     all_tests_fails_str = all_tests.read_text()
     all_tests_json = all_tests_as_dict_from_all_fails(all_tests_fails_str)
 
+    # upb-zig implementation
     upb_fails_str = upb_fails.read_text()
     upb_zig_report = deepcopy(all_tests_json)
     apply_fails_to_perfect_report(upb_fails_str, upb_zig_report)
 
+    # zig-protobuf implementation
     zig_protobuf_fails_str = zig_pb_fails.read_text()
     zig_protobuf_report = deepcopy(all_tests_json)
     apply_fails_to_perfect_report(zig_protobuf_fails_str, zig_protobuf_report)
@@ -195,13 +207,143 @@ def handle_input(all_tests: Path, upb_fails: Path, zig_pb_fails: Path):
         ["Recommended", "Editions_Proto2"],
         ["Recommended", "Editions_Proto3"],
     ]
+    reports = [upb_zig_report, zig_protobuf_report]
+    names = ["upb-zig", "zig-protobuf"]
 
-    reports = [upb_zig_report, zig_protobuf_report, all_tests_json]
-
-    names = ["upb-zig", "zig-protobuf", "All Pass"]
     table_md = generate_markdown_table(rows, reports, names)
     print(table_md)
 
+def extract_table_from_readme(readme_content: str) -> str:
+    """Extract content between conformance table markers."""
+    start_idx = readme_content.find(START_MARKER)
+    end_idx = readme_content.find(END_MARKER)
+    if start_idx == -1 or end_idx == -1:
+        return ""
+    return readme_content[start_idx + len(START_MARKER):end_idx].strip() + "\n"
+
+def get_updated_readme_str(readme_content: str, new_table: str) -> str:
+    start_idx = readme_content.find(START_MARKER)
+    end_idx = readme_content.find(END_MARKER)
+    if start_idx == -1 or end_idx == -1:
+        raise KeyError("ERROR: Could not find conformance table markers in README.md")
+
+    before = readme_content[:start_idx + len(START_MARKER)]
+    after = readme_content[end_idx:]
+    new_content = before + "\n" + new_table + "\n" + after
+    return new_content
+
+def is_readme_table_outdated(readme: str, new_table: str) -> bool:
+    current_table = extract_table_from_readme(readme)
+    return current_table != new_table
+
+# ----- Badge Gen -----
+#  
+def _lerp(a: float, b: float, t: float) -> float:
+    return a + (b - a) * t
+
+def _bar_color(pct: float) -> str:
+    """Smooth gradient from red (0%) -> orange (50%) -> green (100%)."""
+    pct = max(0.0, min(100.0, pct))
+    if pct < 60:
+        t = pct / 60
+        r = int(_lerp(180, 200, t))
+        g = int(_lerp(60, 140, t))
+        b = int(_lerp(55, 55, t))
+    else:
+        t = (pct - 60) / 40
+        r = int(_lerp(200, 68, t))
+        g = int(_lerp(140, 148, t))
+        b = int(_lerp(55, 68, t))
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def gen_percent_bar_svg(passing: int, total: int) -> str:
+    """Generate a progress bar SVG badge with centered text."""
+    percentage = passing / total * 100
+    bar_width = BADGE_WIDTH * percentage / 100
+    color = _bar_color(percentage)
+    text = f"{percentage:.1f}% ({passing}/{total})"
+
+    if passing == 0:
+        text = f"NA ({passing}/{total})"
+        color = _bar_color(10)
+        bar_width = BADGE_WIDTH
+
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}">
+  <rect width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}" rx="3" fill="#555"/>
+  <rect width="{bar_width}" height="{BADGE_HEIGHT}" rx="3" fill="{color}"/>
+  <rect width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}" rx="3" fill="url(#g)"/>
+  <defs>
+    <linearGradient id="g" x2="0" y2="100%">
+      <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+      <stop offset="1" stop-opacity=".1"/>
+    </linearGradient>
+  </defs>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+    <text x="{BADGE_WIDTH / 2}" y="15" fill="#010101" fill-opacity=".3">{text}</text>
+    <text x="{BADGE_WIDTH / 2}" y="14">{text}</text>
+  </g>
+</svg>"""
+
+
+def update_badges(workspace_dir: Path, badge_refs: list[str]):
+    badges_dir = workspace_dir / ".github" / "badges"
+    for badge in badge_refs:
+        passing, total = badge.split("_")
+        svg = gen_percent_bar_svg(int(passing), int(total))
+        (badges_dir / f"{badge}.svg").write_text(svg, encoding="utf-8")
+
+    ...
+
+@cli.command('update')
+@click.option(
+    "--readme",
+    type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
+    help="path to the readme in the source tree"
+)
+@click.option(
+    "--table",
+    type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
+    help="md file that contains the current table values"
+)
+def update(readme: Path, table: Path):
+    readme_str = readme.read_text()
+    table_str = table.read_text()
+    if is_readme_table_outdated(readme_str, table_str):
+        new_readme = get_updated_readme_str(readme_str, table_str)
+
+        regex_results = re.findall(r'(.github/badges/(.*?).svg)', new_readme)
+        badges = [b[1] for b in regex_results]
+        update_badges(readme.parent, badges)
+
+        readme.write_text(new_readme)
+    else:
+        click.echo('Readme is already up to date')
+
+@cli.command('up-to-date')
+@click.option(
+    "--readme",
+    type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
+    help="path to the readme in the source tree"
+)
+@click.option(
+    "--table",
+    type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
+    help="md file that contains the current table values"
+)
+def up_to_date(readme: Path, table: Path):
+    readme_str = readme.read_text()
+    table_str = table.read_text()
+    if is_readme_table_outdated(readme_str, table_str):
+        click.echo("README.md conformance table is out of date. To fix, run:")
+        click.echo("")
+        click.echo("  bazel run //conformance:update_conformance_report")
+        sys.exit(1)
+    else:
+        print("README conformance table is up to date.")
+        sys.exit(0)
+
 
 if __name__ == "__main__":
-    handle_input()
+    cli()
