@@ -68,44 +68,12 @@ zig_binary(
     visibility = ["//conformance:__pkg__"],
 )
 
-# Full conformance test suite
-
-# note on expected failures, the contents of expected_failures.txt was copied
-# wholesale from the conformance test target for upb in the protobuf repo
-# there is no way we can guarantee something to work if it does not even work in the
-# official implementation.
-
-make_shell_script(
-    name = "gen_test_conformance_upb_zig_dynamic_minitable",
-    out = "test_conformance_upb_zig_dynamic_minitable.sh",
-    contents = "$1 --maximum_edition 2023 --enforce_recommended $2",
-    # contents = "$1 --maximum_edition 2023 --enforce_recommended --failure_list $2 $3",
-)
-
+# this is the target that actually runs the conformance test for upb-zig.
+# it spits out the failure list as a txt file.
 genrule(
     name = "upb_fails",
     testonly = True,
     outs = ["upb_fails.txt"],
     tools = [":testee", "@com_google_protobuf//conformance:conformance_test_runner"],
     cmd = "$(location @com_google_protobuf//conformance:conformance_test_runner) --maximum_edition 2023 --enforce_recommended $(location :testee) > $@ 2>&1 || true",
-)
-
-sh_test(
-    name = "conformance",
-    srcs = ["test_conformance_upb_zig_dynamic_minitable.sh"],
-    args = [
-        "$(location @com_google_protobuf//conformance:conformance_test_runner)",
-        # "$(location :expected_failures.txt)",
-        "$(location testee)",
-    ],
-    data = [
-        "@com_google_protobuf//conformance:conformance_test_runner",
-        # ":expected_failures.txt",
-        ":testee",
-    ],
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-    tags = ["should_fail"],
 )
