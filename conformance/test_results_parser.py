@@ -114,7 +114,7 @@ def set_test_result_existing(tree: JSONish | bool, test: str, result: bool) -> N
             f"while resolving {test!r}"
         )
 
-    test[leaf] = result
+    tree[leaf] = result
 
         
 def apply_fails_to_perfect_report(fails: str, perfect_report: JSONish) -> None:
