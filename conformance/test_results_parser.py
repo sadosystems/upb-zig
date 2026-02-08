@@ -108,7 +108,7 @@ def set_test_result_existing(tree: JSONish | bool, test: str, result: bool) -> N
             f"Expected dict at {'.'.join(walked) or '<root>'}, "
             f"but found {tree.__class__.__name__} while setting leaf {leaf!r} of {test!r}"
         )
-    if leaf not in test:
+    if leaf not in tree:
         raise KeyError(
             f"Missing leaf {leaf!r} under {'.'.join(walked) or '<root>'} "
             f"while resolving {test!r}"
