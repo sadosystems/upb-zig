@@ -82,40 +82,39 @@ def count_passing_tests(tree: JSONish | bool) -> int:
         case _:
             raise ValueError("unreachable")
 
-def set_test_result_existing(tree: JSONish, test: str, result: bool) -> None:
+def set_test_result_existing(tree: JSONish | bool, test: str, result: bool) -> None:
     parts = test.split(".")
-    node: Any = tree
     walked: list[str] = []
 
     # Walk all but the leaf, requiring every intermediate key to exist.
     for key in parts[:-1]:
         walked.append(key)
-        if not isinstance(node, dict):
+        if not isinstance(tree, dict):
             raise TypeError(
                 f"Expected dict at {'.'.join(walked[:-1]) or '<root>'}, "
-                f"but found {type(node).__name__} while resolving {test!r}"
+                f"but found {tree.__class__.__name__} while resolving {test!r}"
             )
-        if key not in node:
+        if key not in tree:
             raise KeyError(
                 f"Missing path component {key!r} at {'.'.join(walked[:-1]) or '<root>'} "
                 f"while resolving {test!r}"
             )
-        node = node[key]
+        tree = tree[key]
 
     # Set the leaf, requiring it to exist.
     leaf = parts[-1]
-    if not isinstance(node, dict):
+    if not isinstance(test, dict):
         raise TypeError(
             f"Expected dict at {'.'.join(walked) or '<root>'}, "
-            f"but found {type(node).__name__} while setting leaf {leaf!r} of {test!r}"
+            f"but found {tree.__class__.__name__} while setting leaf {leaf!r} of {test!r}"
         )
-    if leaf not in node:
+    if leaf not in test:
         raise KeyError(
             f"Missing leaf {leaf!r} under {'.'.join(walked) or '<root>'} "
             f"while resolving {test!r}"
         )
 
-    node[leaf] = result
+    test[leaf] = result
 
         
 def apply_fails_to_perfect_report(fails: str, perfect_report: JSONish) -> None:
