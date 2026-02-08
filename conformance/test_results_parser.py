@@ -103,7 +103,7 @@ def set_test_result_existing(tree: JSONish | bool, test: str, result: bool) -> N
 
     # Set the leaf, requiring it to exist.
     leaf = parts[-1]
-    if not isinstance(test, dict):
+    if not isinstance(tree, dict):
         raise TypeError(
             f"Expected dict at {'.'.join(walked) or '<root>'}, "
             f"but found {tree.__class__.__name__} while setting leaf {leaf!r} of {test!r}"
