@@ -6,3 +6,4 @@
 - rewrite the plugin (just code gen part not the runtime) in zig
 - cross compile binary to all platforms and distribute those with gh releases so you don't need to use python / pip
 - make a better release process for the plugin
+- Document the bazel usage
