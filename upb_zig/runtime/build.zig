@@ -14,6 +14,10 @@ pub fn build(b: *std.Build) void {
     mod.addIncludePath(b.path("external/protobuf+"));
     mod.addIncludePath(b.path("upb_zig/runtime"));
     mod.addIncludePath(b.path("external/protobuf+/third_party/utf8_range"));
+    // Generated protobuf headers (descriptor.upb.h etc.)
+    mod.addIncludePath(b.path("generated"));
+    // Pre-generated cmake minitable headers.
+    mod.addIncludePath(b.path("external/protobuf+/upb/reflection/cmake"));
 
     // All C source files from upb and helpers.
     const c_sources = .{
@@ -71,6 +75,9 @@ pub fn build(b: *std.Build) void {
         "external/protobuf+/upb/wire/reader.c",
         "external/protobuf+/third_party/utf8_range/utf8_range.c",
         "upb_zig/runtime/upb_helpers.c",
+        // Pre-generated descriptor minitable (defines google__protobuf__*_msg_init symbols
+        // needed by the reflection API).
+        "external/protobuf+/upb/reflection/cmake/google/protobuf/descriptor.upb_minitable.c",
     };
 
     inline for (c_sources) |c_file| {
@@ -78,4 +85,12 @@ pub fn build(b: *std.Build) void {
     }
 
     mod.link_libc = true;
+
+    const tests = b.addTest(.{
+        .root_module = mod,
+    });
+
+    const run_tests = b.addRunArtifact(tests);
+    const test_step = b.step("test", "Run upb_zig tests");
+    test_step.dependOn(&run_tests.step);
 }

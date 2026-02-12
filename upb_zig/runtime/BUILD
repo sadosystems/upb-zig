@@ -16,6 +16,9 @@ zig_package(
     lib = ":upb_zig",
     build_zig = "build.zig",
     build_zig_zon = "build.zig.zon",
+    extra_srcs = [
+        "@com_google_protobuf//upb/reflection:descriptor_upb_proto_cmake",
+    ],
 )
 
 package(default_visibility = ["//visibility:public"])

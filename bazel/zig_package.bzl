@@ -10,13 +10,17 @@ CcSourcesInfo = provider(
 def _cc_sources_aspect_impl(target, ctx):
     sources = []
 
-    # Collect srcs and hdrs from cc_library (and similar) rules.
-    if hasattr(ctx.rule.attr, "srcs"):
-        for src in ctx.rule.attr.srcs:
-            sources.append(src.files)
-    if hasattr(ctx.rule.attr, "hdrs"):
-        for hdr in ctx.rule.attr.hdrs:
-            sources.append(hdr.files)
+    # Collect srcs, hdrs, and textual_hdrs from cc_library (and similar) rules.
+    for attr_name in ("srcs", "hdrs", "textual_hdrs"):
+        if hasattr(ctx.rule.attr, attr_name):
+            for src in getattr(ctx.rule.attr, attr_name):
+                sources.append(src.files)
+
+    # Collect files from DefaultInfo. This catches proto-generated
+    # code (e.g. from upb_proto_library) that isn't in any rule's
+    # srcs/hdrs attributes.
+    if DefaultInfo in target:
+        sources.append(target[DefaultInfo].files)
 
     # Accumulate transitively from deps.
     if hasattr(ctx.rule.attr, "deps"):
@@ -39,6 +43,17 @@ def _zig_package_impl(ctx):
     src_depsets.append(module.transitive_inputs)
     if CcSourcesInfo in ctx.attr.lib:
         src_depsets.append(ctx.attr.lib[CcSourcesInfo].sources)
+
+    # Also include compilation_context.headers to catch generated headers
+    # (e.g. descriptor.upb.h) that aren't in any rule's srcs/hdrs attrs.
+    if module.cc_info:
+        src_depsets.append(module.cc_info.compilation_context.headers)
+
+    # Include extra source files (e.g. pre-generated minitable sources
+    # that aren't reachable through the normal dep graph).
+    for extra in ctx.files.extra_srcs:
+        src_depsets.append(depset([extra]))
+
     all_srcs = depset(transitive = src_depsets).to_list()
 
     # Output is a directory with build.zig at the root.
@@ -51,6 +66,7 @@ def _zig_package_impl(ctx):
     cmds.append('cp %s "$1/build.zig"' % ctx.file.build_zig.path)
     cmds.append('cp %s "$1/build.zig.zon"' % ctx.file.build_zig_zon.path)
 
+
     dirs = {}
     for f in all_srcs:
         # short_path for external files starts with ../repo_name/...
@@ -58,6 +74,20 @@ def _zig_package_impl(ctx):
         path = f.short_path
         if path.startswith("../"):
             path = "external/" + path[3:]
+
+        # Bazel's _virtual_imports directories are synthetic include
+        # trees created for generated headers. Place these files under a
+        # top-level generated/ directory using the include-relative path
+        # (the part after _virtual_imports/target_name/).
+        vi = "_virtual_imports/"
+        vi_idx = path.find(vi)
+        if vi_idx != -1:
+            after_vi = path[vi_idx + len(vi):]
+            # Skip the target name directory (e.g. "descriptor_proto/")
+            slash_idx = after_vi.find("/")
+            if slash_idx != -1:
+                path = "generated/" + after_vi[slash_idx + 1:]
+
         parent = path.rsplit("/", 1)[0] if "/" in path else ""
         if parent and parent not in dirs:
             dirs[parent] = True
@@ -91,6 +121,11 @@ zig_package = rule(
             mandatory = True,
             allow_single_file = [".zon"],
             doc = "The build.zig.zon file, placed at the package root.",
+        ),
+        "extra_srcs": attr.label_list(
+            default = [],
+            allow_files = True,
+            doc = "Extra source files to include in the package (e.g. pre-generated protobuf minitable sources).",
         ),
     },
 )

@@ -1,0 +1,17 @@
+--- a/upb/reflection/BUILD
++++ b/upb/reflection/BUILD
+@@ -26,6 +26,14 @@
+
+ package(default_applicable_licenses = ["//:license"])
+
++# Export pre-generated descriptor minitable sources for out-of-Bazel builds
++# (e.g. standalone Zig packages).
++filegroup(
++    name = "descriptor_upb_proto_cmake",
++    srcs = glob(["cmake/**/*.c", "cmake/**/*.h"]),
++    visibility = ["//visibility:public"],
++)
++
+ bootstrap_upb_proto_library(
+     name = "descriptor_upb_proto",
+     bootstrap_hdr = "descriptor_bootstrap.h",

@@ -11,4 +11,6 @@ git_override(
     module_name = "protobuf",
     remote = "https://github.com/protocolbuffers/protobuf.git",
     commit = "272f68a6bbcc7ac8e34736e85b5a0e14fe135e20",
+    patches = ["//bazel/patches:protobuf_export_descriptor_cmake.patch"],
+    patch_strip = 1,
 )
