@@ -1,5 +1,25 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_zig//zig:defs.bzl", "zig_library", "zig_test")
+load("//bazel:zig_package.bzl", "zig_package")
+
+genrule(
+    name = "runtime_tarball",
+    srcs = [
+        ":runtime_package",
+    ],
+    outs = ["upb-zig-runtime.tar.gz"],
+    cmd = "tar -chzf $@ -C $(SRCS) .",
+)
+
+zig_package(
+    name = "runtime_package",
+    lib = ":upb_zig",
+    build_zig = "build.zig",
+    build_zig_zon = "build.zig.zon",
+    extra_srcs = [
+        "@com_google_protobuf//upb/reflection:descriptor_upb_proto_cmake",
+    ],
+)
 
 package(default_visibility = ["//visibility:public"])
 
