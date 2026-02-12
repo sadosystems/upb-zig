@@ -1,20 +1,22 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_zig//zig:defs.bzl", "zig_library", "zig_test")
+load("//bazel:zig_package.bzl", "zig_package")
 
 genrule(
     name = "runtime_tarball",
     srcs = [
-        "build.zig",
-        "build.zig.zon",
-        "upb_zig.zig",
-        "upb_helpers.c",
-        "upb_helpers.h",
+        ":runtime_package",
     ],
     outs = ["upb-zig-runtime.tar.gz"],
-    cmd = "tar -czf $@ --transform='s|.*/||' $(SRCS)",
+    cmd = "tar -chzf $@ -C $(SRCS) .",
 )
 
-
+zig_package(
+    name = "runtime_package",
+    lib = ":upb_zig",
+    build_zig = "build.zig",
+    build_zig_zon = "build.zig.zon",
+)
 
 package(default_visibility = ["//visibility:public"])
 
