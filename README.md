@@ -4,17 +4,17 @@ This project hosts a Zig implementation of [protocol buffers](https://protobuf.d
 
 This project is comprised of two components:
 
-- Code generator: The [protoc-gen-zig](https://pypi.org/project/protoc-gen-zig/) tool is a compiler plugin to protoc, the protocol buffer compiler. It augments the protoc compiler so that it knows how to generate Zig specific code for a given .proto file.
+- Code generator: The `upb_zig/plugin` folder contains [protoc-gen-zig](https://pypi.org/project/protoc-gen-zig/) a compiler plugin to protoc, the protocol buffer compiler. It augments the protoc compiler so that it knows how to generate Zig specific code for a given .proto file.
 
-- Runtime library: The `upb-zig/runtime` folder contains a Zig module that forms the runtime implementation of protobufs in Zig. This provides the set of types and functions that define what a message is and functionality to serialize messages in various formats (e.g., wire, JSON, and text).
+- Runtime library: The `upb_zig/runtime` folder contains a Zig module that forms the runtime implementation of protobufs in Zig. This provides the set of types and functions that define what a message is and functionality to serialize messages in various formats (e.g., wire, JSON, and text).
 
 upb-zig is the only Zig protobuf library that passes [all the protobuf conformance tests](https://github.com/sadosystems/upb-zig/tree/master?tab=readme-ov-file#protobuf-conformance-tests). That's actually [_NOT_ as impressive as it sounds](https://github.com/sadosystems/upb-zig/tree/master?tab=readme-ov-file#how-it-works)! Despite that seemingly impressive test coverage, this library is NOT ready for production use. It has API and performance issues which may or may not ever be worked out.
 
-Also holy bloat this project will not appeal to your Zig-like sensibilities. do not be mislead by the "μ" in upb there is nothing micro about this dependency. The code generator is distributed as either a bazel rule or a Python exectuable on Pypi so you will need a Python interpreter to generate code and the runtime is mostly C not Zig.
+Also holy bloat this project will not appeal to your Zig-like sensibilities. do not be mislead by the "μ" in upb there is nothing micro about this dependency. The code generator is distributed as either a Bazel rule or a Python exectuable on Pypi so you will need a Python interpreter to generate code and the runtime is mostly C not Zig.
 
 You should probably use [zig-protobuf](https://github.com/Arwalk/zig-protobuf) instead unless you absolutely need full conformance.
 
-Also if you are a bazel user, I have some rules for you! 
+Also if you are a Bazel user, I have some rules for you! 
 
 ## Installation
 
@@ -49,10 +49,10 @@ bazel_dep(name = "upb-zig", version = "1.0.0")
 ```
 
 ## Use
-You can either use this library as a Bazel module, or you can import it in you bazel build script, I have created example repos demonstrating both integration approaches.
+You can either use this library as a Bazel module, or you can import it in you Bazel build script, I have created example repos demonstrating both integration approaches.
 
 [Example repo using build.zig](https://github.com/sadosystems/upb-zig-minimal-example)
-[Example repo using module.bazel](TODO)
+[Example repo using MODULE.bazel](TODO)
 
 ## Why?
 Why make this when [zig-protobuf](https://github.com/Arwalk/zig-protobuf) and [gremlin.zig](https://github.com/norma-core/gremlin.zig) exist?

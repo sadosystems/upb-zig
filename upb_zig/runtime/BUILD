@@ -1,6 +1,21 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_zig//zig:defs.bzl", "zig_library", "zig_test")
 
+genrule(
+    name = "runtime_tarball",
+    srcs = [
+        "build.zig",
+        "build.zig.zon",
+        "upb_zig.zig",
+        "upb_helpers.c",
+        "upb_helpers.h",
+    ],
+    outs = ["upb-zig-runtime.tar.gz"],
+    cmd = "tar -czf $@ --transform='s|.*/||' $(SRCS)",
+)
+
+
+
 package(default_visibility = ["//visibility:public"])
 
 # C helper library - wraps upb inline functions to avoid Zig alignment issues
