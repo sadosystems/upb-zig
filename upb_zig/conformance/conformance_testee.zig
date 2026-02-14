@@ -10,13 +10,13 @@
 
 const std = @import("std");
 const upb_zig = @import("upb_zig");
-const conformance_pb = @import("conformance_conformance");
+const conformance_pb = @import("conformance_pb");
 
 // Import generated proto modules for the test messages
-const proto3 = @import("google_protobuf_test_messages_proto3");
-const proto2 = @import("google_protobuf_test_messages_proto2");
-const proto3_editions = @import("editions_golden_test_messages_proto3_editions");
-const proto2_editions = @import("editions_golden_test_messages_proto2_editions");
+const proto3 = @import("test_messages_proto3_pb");
+const proto2 = @import("test_messages_proto2_pb");
+const proto3_editions = @import("test_messages_proto3_editions_pb");
+const proto2_editions = @import("test_messages_proto2_editions_pb");
 
 /// Read exactly `len` bytes from a file descriptor into `buf`.
 fn readFullyFd(fd: std.posix.fd_t, buf: []u8) !void {

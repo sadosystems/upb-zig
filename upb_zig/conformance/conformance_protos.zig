@@ -5,7 +5,7 @@
 //! conformance test harness.
 
 const std = @import("std");
-const conformance_pb = @import("conformance_conformance");
+const conformance_pb = @import("conformance_pb");
 const upb_zig = @import("upb_zig");
 
 // ============================================================================
