@@ -2,15 +2,16 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_zig//zig:defs.bzl", "zig_library", "zig_test")
 load("//bazel:zig_package.bzl", "zig_package")
 
+
 genrule(
     name = "runtime_tarball",
     srcs = [
         ":runtime_package",
     ],
     outs = ["upb-zig-runtime.tar.gz"],
-    cmd = "tar -chzf $@ -C $(SRCS) .",
+    cmd = "tar -chzf $@ --transform 's,^,upb-zig-runtime/,' -C $(SRCS) .",
 )
-
+  
 zig_package(
     name = "runtime_package",
     lib = ":upb_zig",
