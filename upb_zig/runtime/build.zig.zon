@@ -1,5 +1,5 @@
 .{
-    .name = .upb_zig,
+    .name = .upb_runtime,
     .version = "0.0.0",
     .minimum_zig_version = "0.15.2",
     .paths = .{
