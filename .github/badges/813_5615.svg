@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
-  <rect width="120" height="20" rx="3" fill="#303138"/>
+  <rect width="120" height="20" rx="3" fill="#282930"/>
   <rect width="17.374888691006234" height="20" rx="3" fill="#e05e43"/>
   <rect width="120" height="20" rx="3" fill="url(#g)"/>
   <defs>
