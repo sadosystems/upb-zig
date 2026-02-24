@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
   <rect width="120" height="20" rx="3" fill="#555"/>
-  <rect width="118.8679245283019" height="20" rx="3" fill="#479343"/>
+  <rect width="118.8679245283019" height="20" rx="3" fill="#53b14f"/>
   <rect width="120" height="20" rx="3" fill="url(#g)"/>
   <defs>
     <linearGradient id="g" x2="0" y2="100%">
