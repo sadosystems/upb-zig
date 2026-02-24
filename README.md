@@ -1,5 +1,5 @@
 <p align="left">
-  <img src=".github/upb-Zig-Logo-with-shadow.png" width="320">
+  <img src=".github/upb-Zig.png" width="320">
 </p> 
 
 ⚠️ UNDER CONSTRUCTION ⚠️
