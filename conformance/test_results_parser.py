@@ -243,16 +243,22 @@ def _lerp(a: float, b: float, t: float) -> float:
 def _bar_color(pct: float) -> str:
     """Smooth gradient from red (0%) -> orange (50%) -> green (100%)."""
     pct = max(0.0, min(100.0, pct))
+    red_tone = (230, 75, 69)
+    orange_tone = (209, 155, 63)
+    green_tone = (80, 178, 80)
+
+
+
     if pct < 60:
         t = pct / 60
-        r = int(_lerp(180, 200, t))
-        g = int(_lerp(60, 140, t))
-        b = int(_lerp(55, 55, t))
+        r = int(_lerp(red_tone[0], orange_tone[0], t))
+        g = int(_lerp(red_tone[1], orange_tone[1], t))
+        b = int(_lerp(red_tone[2], orange_tone[2], t))
     else:
         t = (pct - 60) / 40
-        r = int(_lerp(200, 68, t))
-        g = int(_lerp(140, 148, t))
-        b = int(_lerp(55, 68, t))
+        r = int(_lerp(orange_tone[0], green_tone[0], t))
+        g = int(_lerp(orange_tone[1], green_tone[1], t))
+        b = int(_lerp(orange_tone[2], green_tone[2], t))
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
@@ -270,17 +276,17 @@ def gen_percent_bar_svg(passing: int, total: int) -> str:
 
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}">
-  <rect width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}" rx="3" fill="#555"/>
+  <rect width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}" rx="3" fill="#282930"/>
   <rect width="{bar_width}" height="{BADGE_HEIGHT}" rx="3" fill="{color}"/>
   <rect width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}" rx="3" fill="url(#g)"/>
   <defs>
     <linearGradient id="g" x2="0" y2="100%">
-      <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+      <stop offset="0" stop-color="#d4cec3" stop-opacity=".2"/>
       <stop offset="1" stop-opacity=".1"/>
     </linearGradient>
   </defs>
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
-    <text x="{BADGE_WIDTH / 2}" y="15" fill="#010101" fill-opacity=".3">{text}</text>
+    <text x="{BADGE_WIDTH / 2}" y="15" fill="#010101" fill-opacity=".5">{text}</text>
     <text x="{BADGE_WIDTH / 2}" y="14">{text}</text>
   </g>
 </svg>"""
