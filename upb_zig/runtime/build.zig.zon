@@ -1,5 +1,6 @@
 .{
     .name = .upb_runtime,
+    .fingerprint = 0xa4e25188b717eeb9,
     .version = "0.0.0",
     .minimum_zig_version = "0.15.2",
     .paths = .{

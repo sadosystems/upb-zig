@@ -4,11 +4,26 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const mod = b.addModule("upb_zig", .{
+    const mod = b.addModule("upb_runtime", .{
+        .root_source_file = b.path("upb_zig/runtime/re_export_everything.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const upb_zig_mod = b.addModule("upb_zig", .{
         .root_source_file = b.path("upb_zig/runtime/upb_zig.zig"),
         .target = target,
         .optimize = optimize,
     });
+
+    const wkt = b.addModule("wkt", .{
+        .root_source_file = b.path("upb_zig/runtime/upb_zig.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    mod.addImport("upb_zig_mod", upb_zig_mod);
+    mod.addImport("wkt", wkt);
 
     // Include paths for C headers.
     mod.addIncludePath(b.path("external/protobuf+"));
