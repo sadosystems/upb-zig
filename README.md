@@ -1,6 +1,6 @@
 <p align="center">
-  <img src=".github/upb-Zig-logo-with-shadow.png" width="290">
-</p>
+  <img src=".github/upb-Zig-Logo-with-shadow.png" width="290">
+</p> 
 
 ⚠️ UNDER CONSTRUCTION ⚠️
 
