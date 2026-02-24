@@ -281,12 +281,12 @@ def gen_percent_bar_svg(passing: int, total: int) -> str:
   <rect width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}" rx="3" fill="url(#g)"/>
   <defs>
     <linearGradient id="g" x2="0" y2="100%">
-      <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+      <stop offset="0" stop-color="#d4cec3" stop-opacity=".2"/>
       <stop offset="1" stop-opacity=".1"/>
     </linearGradient>
   </defs>
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
-    <text x="{BADGE_WIDTH / 2}" y="15" fill="#010101" fill-opacity=".3">{text}</text>
+    <text x="{BADGE_WIDTH / 2}" y="15" fill="#010101" fill-opacity=".5">{text}</text>
     <text x="{BADGE_WIDTH / 2}" y="14">{text}</text>
   </g>
 </svg>"""
