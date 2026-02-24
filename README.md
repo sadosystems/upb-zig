@@ -1,4 +1,4 @@
-<p align="center">
+<p align="left">
   <img src=".github/upb-Zig-Logo-with-shadow.png" width="290">
 </p> 
 
