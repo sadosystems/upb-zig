@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/upb-Zig-logo.png" width="180">
+  <img src=".github/upb-Zig-logo.png" width="200">
 </p>
 UNDER CONSTRUCTION
 # μpb-Zig: Zig support for protocol buffers
