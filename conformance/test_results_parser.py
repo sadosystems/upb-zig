@@ -276,7 +276,7 @@ def gen_percent_bar_svg(passing: int, total: int) -> str:
 
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}">
-  <rect width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}" rx="3" fill="#555"/>
+  <rect width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}" rx="3" fill="#303138"/>
   <rect width="{bar_width}" height="{BADGE_HEIGHT}" rx="3" fill="{color}"/>
   <rect width="{BADGE_WIDTH}" height="{BADGE_HEIGHT}" rx="3" fill="url(#g)"/>
   <defs>
