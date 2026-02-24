@@ -1,3 +1,5 @@
+![](.github/upb-Zig-logo.png)
+
 UNDER CONSTRUCTION
 # μpb-Zig: Zig support for protocol buffers
 This project hosts a Zig implementation of [protocol buffers](https://protobuf.dev/) which is a language-neutral mechanism for serializing structured data. It includes code gen that produces Zig bindings from `.proto` schemas and a runtime library to handle serialization. See the [protocol buffer developer guide](https://protobuf.dev/overview/) for more information about protocol buffers themselves. The implementation is backed by upb.
