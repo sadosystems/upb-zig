@@ -1,6 +1,9 @@
-<p align="center">
+<!-- <p align="center">
   <img src=".github/upb-Zig-logo.png" width="300">
-</p>
+</p> -->
+
+# [![](.github/upb-Zig-logo.png)][μpb-Zig] μpb-Zig 
+
 
 ⚠️ UNDER CONSTRUCTION ⚠️
 
