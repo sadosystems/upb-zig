@@ -21,6 +21,12 @@ zig_package(
     build_zig_zon = "build.zig.zon",
     extra_srcs = [
         "@com_google_protobuf//upb/reflection:descriptor_upb_proto_cmake",
+        "@com_google_protobuf//upb/mem",
+        "@com_google_protobuf//upb/message",
+        "@com_google_protobuf//upb/base",
+        "@com_google_protobuf//upb/reflection:reflection",
+        "@com_google_protobuf//upb/mini_table",
+        "@com_google_protobuf//upb/json:json",
     ],
 )
 
