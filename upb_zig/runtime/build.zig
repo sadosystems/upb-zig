@@ -32,7 +32,16 @@ pub fn build(b: *std.Build) void {
 
     wkt_timestamp.addImport("upb_zig", upb_zig_mod);
 
+    const wkt_any = b.addModule("wkt", .{
+        .root_source_file = b.path("generated/google/protobuf/any.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    wkt_any.addImport("upb_zig", upb_zig_mod);
+
     wkt.addImport("timestamp_pb", wkt_timestamp);
+    wkt.addImport("any_pb", wkt_any);
 
     mod.addImport("upb_zig", upb_zig_mod);
     mod.addImport("wkt", wkt);
