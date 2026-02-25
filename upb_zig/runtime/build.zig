@@ -22,7 +22,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    mod.addImport("upb_zig_mod", upb_zig_mod);
+    mod.addImport("upb_zig", upb_zig_mod);
     mod.addImport("wkt", wkt);
 
     // Include paths for C headers.
