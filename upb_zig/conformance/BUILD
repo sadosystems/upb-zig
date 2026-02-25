@@ -12,23 +12,23 @@ zig_proto_library(
 )
 
 zig_proto_library(
-    name = "zig_test_messages_proto3",
+    name = "test_messages_proto3_pb",
     deps = ["@com_google_protobuf//conformance/test_protos:test_messages_proto3_proto"],
 )
 
 zig_proto_library(
-    name = "zig_test_messages_proto2",
+    name = "test_messages_proto2_pb",
     deps = ["@com_google_protobuf//conformance/test_protos:test_messages_proto2_proto"],
 )
 
 zig_proto_library(
-    name = "zig_test_messages_proto3_editions",
+    name = "test_messages_proto3_editions_pb",
     testonly = True,
     deps = ["@com_google_protobuf//conformance/test_protos:test_messages_proto3_editions_proto"],
 )
 
 zig_proto_library(
-    name = "zig_test_messages_proto2_editions",
+    name = "test_messages_proto2_editions_pb",
     testonly = True,
     deps = ["@com_google_protobuf//conformance/test_protos:test_messages_proto2_editions_proto"],
 )
@@ -45,7 +45,7 @@ zig_test(
 zig_test(
     name = "transitive_deps_test",
     main = "transitive_deps.zig",
-    deps = [":zig_test_messages_proto3", "//upb_zig/runtime:upb_zig"],
+    deps = [":test_messages_proto3_pb", "//upb_zig/runtime:upb_zig"],
     zigopts = ["-lc"],
 )
 
@@ -59,10 +59,10 @@ zig_binary(
     deps = [
         "//upb_zig/runtime:upb_zig",
         ":conformance_pb",
-        ":zig_test_messages_proto3",
-        ":zig_test_messages_proto2",
-        ":zig_test_messages_proto3_editions",
-        ":zig_test_messages_proto2_editions",
+        ":test_messages_proto3_pb",
+        ":test_messages_proto2_pb",
+        ":test_messages_proto3_editions_pb",
+        ":test_messages_proto2_editions_pb",
     ],
     zigopts = ["-lc"],
     visibility = ["//conformance:__pkg__"],

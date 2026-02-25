@@ -1,5 +1,5 @@
 const std = @import("std");
-const test_messages = @import("google_protobuf_test_messages_proto3");
+const test_messages = @import("test_messages_proto3_pb");
 const upb_zig = @import("upb_zig");
 
 test "TestAllTypesProto3 compiles fully" {

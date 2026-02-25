@@ -626,7 +626,7 @@ def generate_file(file_desc: FileDescriptorProto, file_map: Dict[str, FileDescri
     # Generate import statements
     imports = ["const std = @import(\"std\");", "const upb_zig = @import(\"upb_zig\");"]
     for module in modules_needed:
-        imports.append(f'const {module} = @import("{module}");')
+        imports.append(f'pub const {module} = @import("{module}");')
 
     # Create a type resolver that qualifies external types
     def resolve_type(type_name: str) -> str:

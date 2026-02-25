@@ -643,6 +643,7 @@ test "Arena: allocate memory" {
 
     const mem = try arena.alloc(64);
     try std.testing.expectEqual(@as(usize, 64), mem.len);
+    try std.testing.expectEqual(@as(usize, 64), mem.len);
 
     // Write to memory to verify it's usable
     @memset(mem, 0xAB);

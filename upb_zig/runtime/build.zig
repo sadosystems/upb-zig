@@ -4,15 +4,53 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const mod = b.addModule("upb_zig", .{
-        .root_source_file = b.path("upb_zig/runtime/upb_zig.zig"),
+    const mod = b.addModule("upb_runtime", .{
+        .root_source_file = b.path("upb_zig/runtime/re_export_everything.zig"),
         .target = target,
         .optimize = optimize,
     });
 
+    const upb_zig_mod = b.addModule("upb_zig", .{
+        .root_source_file = b.path("upb_zig/runtime/upb_zig.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    upb_zig_mod.addIncludePath(b.path("external/protobuf+"));
+    upb_zig_mod.addIncludePath(b.path("upb_zig/runtime"));
+
+    const wkt = b.addModule("wkt", .{
+        .root_source_file = b.path("upb_zig/runtime/re_export_well_known_types.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    
+    const wkt_timestamp = b.addModule("wkt", .{
+        .root_source_file = b.path("generated/google/protobuf/timestamp.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    wkt_timestamp.addImport("upb_zig", upb_zig_mod);
+
+    const wkt_any = b.addModule("wkt", .{
+        .root_source_file = b.path("generated/google/protobuf/any.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    wkt_any.addImport("upb_zig", upb_zig_mod);
+
+    wkt.addImport("timestamp_pb", wkt_timestamp);
+    wkt.addImport("any_pb", wkt_any);
+
+    mod.addImport("upb_zig", upb_zig_mod);
+    mod.addImport("wkt", wkt);
+
     // Include paths for C headers.
     mod.addIncludePath(b.path("external/protobuf+"));
     mod.addIncludePath(b.path("upb_zig/runtime"));
+    mod.addIncludePath(b.path("external/protobuf+/upb"));
+
     mod.addIncludePath(b.path("external/protobuf+/third_party/utf8_range"));
     // Generated protobuf headers (descriptor.upb.h etc.)
     mod.addIncludePath(b.path("generated"));

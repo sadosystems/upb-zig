@@ -146,7 +146,7 @@ def _zig_proto_library_impl(ctx):
     all_files = list(transitive_modules.values())
 
     # Get the main module name (first direct module)
-    main_module_name = list(direct_modules.keys())[0] if direct_modules else ctx.label.name
+    main_module_name = ctx.attr.name
 
     # Build module contexts for each transitive module EXCEPT the main one
     transitive_module_contexts = []
@@ -158,7 +158,6 @@ def _zig_proto_library_impl(ctx):
             name = mod_name,
             main = mod_file.path,
             dependency_mappings = (
-                # Each transitive module also needs upb_zig!
                 struct(canonical_name = "upb_zig", name = "upb_zig"),
             ),
             zigopts = (),
