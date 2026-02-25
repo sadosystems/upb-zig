@@ -17,7 +17,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const wkt = b.addModule("wkt", .{
-        .root_source_file = b.path("upb_zig/runtime/upb_zig.zig"),
+        .root_source_file = b.path("upb_zig/runtime/re_export_well_known_types.zig"),
         .target = target,
         .optimize = optimize,
     });
