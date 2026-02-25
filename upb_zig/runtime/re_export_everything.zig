@@ -1,6 +1,6 @@
 const std = @import("std");
 pub const upb_zig = @import("upb_zig");
-pub const wtk = @import("wkt");
+pub const wkt = @import("wkt");
 
 test "Does Anything Work" {
     const arena = try upb_zig.Arena.init(std.testing.allocator);
