@@ -24,7 +24,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     
-    const wkt_timestamp = b.addModule("wkt", .{
+    const wkt_timestamp = b.addModule("wkt_timestamp", .{
         .root_source_file = b.path("generated/google/protobuf/timestamp.pb.zig"),
         .target = target,
         .optimize = optimize,
@@ -32,7 +32,7 @@ pub fn build(b: *std.Build) void {
 
     wkt_timestamp.addImport("upb_zig", upb_zig_mod);
 
-    const wkt_any = b.addModule("wkt", .{
+    const wkt_any = b.addModule("wkt_any", .{
         .root_source_file = b.path("generated/google/protobuf/any.pb.zig"),
         .target = target,
         .optimize = optimize,
@@ -40,8 +40,89 @@ pub fn build(b: *std.Build) void {
 
     wkt_any.addImport("upb_zig", upb_zig_mod);
 
+    const wkt_api = b.addModule("wkt_api",  .{
+        .root_source_file = b.path("generated/google/protobuf/api.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+
+    });
+    
+    wkt_api.addImport("upb_zig", upb_zig_mod);
+
+    const wkt_duration = b.addModule("wkt_duration",  .{
+        .root_source_file = b.path("generated/google/protobuf/duration.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+
+    });
+    
+    wkt_duration.addImport("upb_zig", upb_zig_mod);
+
+    const wkt_empty = b.addModule("wkt_empty",  .{
+        .root_source_file = b.path("generated/google/protobuf/empty.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+
+    });
+    
+    wkt_empty.addImport("upb_zig", upb_zig_mod);
+
+    const wkt_field_mask = b.addModule("wkt_field_mask",  .{
+        .root_source_file = b.path("generated/google/protobuf/field_mask.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+
+    });
+    
+    wkt_field_mask.addImport("upb_zig", upb_zig_mod);
+
+    const wkt_source_context = b.addModule("wkt_source_context",  .{
+        .root_source_file = b.path("generated/google/protobuf/source_context.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+
+    });
+    
+    wkt_source_context.addImport("upb_zig", upb_zig_mod);
+
+    const wkt_struct = b.addModule("wkt_struct",  .{
+        .root_source_file = b.path("generated/google/protobuf/struct.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+
+    });
+    
+    wkt_struct.addImport("upb_zig", upb_zig_mod);
+
+    const wkt_type = b.addModule("wkt_type",  .{
+        .root_source_file = b.path("generated/google/protobuf/type.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+
+    });
+    
+    wkt_type.addImport("upb_zig", upb_zig_mod);
+
+    const wkt_wrappers = b.addModule("wkt_wrappers",  .{
+        .root_source_file = b.path("generated/google/protobuf/wrappers.pb.zig"),
+        .target = target,
+        .optimize = optimize,
+
+    });
+    
+    wkt_wrappers.addImport("upb_zig", upb_zig_mod);
+
+
     wkt.addImport("timestamp_pb", wkt_timestamp);
     wkt.addImport("any_pb", wkt_any);
+    wkt.addImport("api_pb", wkt_api);
+    wkt.addImport("duration_pb", wkt_duration);
+    wkt.addImport("empty_pb", wkt_empty);
+    wkt.addImport("field_mask_pb", wkt_field_mask);
+    wkt.addImport("source_context_pb", wkt_source_context);
+    wkt.addImport("struct_pb", wkt_struct);
+    wkt.addImport("type_pb", wkt_type);
+    wkt.addImport("wrappers_pb", wkt_wrappers);
 
     mod.addImport("upb_zig", upb_zig_mod);
     mod.addImport("wkt", wkt);
